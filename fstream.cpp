@@ -46,3 +46,46 @@ int main(){
 	f.close();
 	return 0;
 }
+
+
+// #include <fstream>
+// #include <iostream>
+// #include <string.h>
+
+// using namespace std;
+
+// int main(){
+
+//     int roll;
+//     string name;
+//     float marks;
+
+//     ofstream fout ("C:\\d\\example.txt");
+//     cout << "Enter name: ";
+//     cin >> name;
+//     fout << name << " ";
+    
+//     cout << "Enter roll no.: ";
+//     cin >> roll;
+//     fout << roll << " ";
+
+//     cout << "Enter marks: ";
+//     cin >> marks;
+//     fout << marks << " ";
+//     fout.close();
+
+//     roll = 0;
+//     name = "default";
+//     marks = 0.0;
+
+//     ifstream fin ("C:\\d\\example.txt");
+//     fin >> name;
+//     fin.ignore();
+//     fin >> roll ;
+//     fin.ignore();
+//     fin >> marks;
+
+//     cout << "Roll No.: " << roll << endl;
+//     cout << "Name: " << name << endl;
+//     cout << "Marks: " << marks << endl;
+// }
