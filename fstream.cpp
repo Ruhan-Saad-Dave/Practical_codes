@@ -89,3 +89,69 @@ int main(){
 //     cout << "Name: " << name << endl;
 //     cout << "Marks: " << marks << endl;
 // }
+
+
+
+
+
+
+// #include<iostream>
+// #include<fstream>
+// #include<string>
+
+// using namespace std;
+
+// class Employee {
+//     public:
+//         string name;
+//         int id;
+//         int salary;
+
+//         void accept(){
+//             cout << "Enter Name: ";
+//             cin >> name;
+//             cout << "Enter id: ";
+//             cin >> id;
+//             cout << "Enter salary: ";
+//             cin >> salary;
+//         }
+
+//         void display(){
+//             cout << "Name: " << name << endl;
+//             cout << "ID: " << id << endl;
+//             cout << "Salary: " << salary << endl;
+//         }
+
+//         void writeI(){
+//             fstream fout ("C:\\d\\example.txt", ios::out | ios::app);
+//             fout << name << " " << id << " " << salary << endl;
+//             fout.close();
+//         }
+
+//         void readI(){
+//             ifstream fin ("C:\\d\\example.txt");
+//             Employee emp;
+//             while(fin >> emp.name >> emp.id >> emp.salary){
+//                 emp.display();
+//             }
+//             fin.close();
+//         }
+// };
+
+// int main(){
+
+//     Employee e[5];
+//     for(int i=0;i<3;i++){
+//         e[i].accept();
+//         e[i].writeI();
+//     }
+
+//     for(int i=0;i<3;i++){
+//         e[i].name = "default";
+//         e[i].id = 0;
+//         e[i].salary = 0;
+//     }
+
+//     e->readI();
+
+// }
