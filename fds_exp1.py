@@ -30,7 +30,7 @@ for i in temp:
         temp.remove(-1)
     else:
         total_score += i
-    count += 1
+        count += 1
 average_score = total_score / count
 print("Average score = ", average_score)
 
