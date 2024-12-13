@@ -5,63 +5,92 @@ b) To check wether given string is palindrome or not.
 */
 
 #include <iostream>
-#include <stack>
-#include <cctype>   // for isalpha, tolower
+using namespace std;
 
-// Function to preprocess the string: removes non-alphabetic characters and converts to lowercase
-std::string preprocess(const std::string& str) {
-    std::string result;
-    for (char ch : str) {
-        if (std::isalpha(ch)) {            // Check if character is alphabetic
-            result += std::tolower(ch);     // Convert to lowercase
+// Stack class definition
+class Stack {
+private:
+    char* arr;
+    int top;
+    int capacity;
+
+public:
+    // Constructor
+    Stack(int size) {
+        arr = new char[size];
+        top = -1;
+        capacity = size;
+    }
+
+    // Destructor
+    ~Stack() {
+        delete[] arr;
+    }
+
+    // Push an element onto the stack
+    void push(char element) {
+        if (top < capacity - 1) {
+            arr[++top] = element;
+        } else {
+            cout << "Stack Overflow" << endl;
         }
     }
-    return result;
-}
 
-// Function to reverse a string using a stack
-std::string reverseUsingStack(const std::string& str) {
-    std::stack<char> stack;
-    for (char ch : str) {
-        stack.push(ch);
+    // Pop an element from the stack
+    char pop() {
+        if (top >= 0) {
+            return arr[top--];
+        } else {
+            cout << "Stack Underflow" << endl;
+            return '\0'; // Return null character on underflow
+        }
     }
 
-    std::string reversedStr;
-    while (!stack.empty()) {
-        reversedStr += stack.top();
-        stack.pop();
+    // Check if the stack is empty
+    bool isEmpty() {
+        return top == -1;
     }
-    return reversedStr;
-}
+};
 
 // Function to check if a string is a palindrome
-bool isPalindrome(const std::string& str) {
-    std::string cleanedStr = preprocess(str);         // Remove non-alphabetic characters and convert to lowercase
-    std::string reversedStr = reverseUsingStack(cleanedStr); // Reverse the cleaned string
-    return cleanedStr == reversedStr;                 // Check if original and reversed strings are the same
+bool isPalindrome(const string& str) {
+    int length = str.length();
+    Stack stack(length);
+
+    // Push all characters onto the stack
+    for (int i = 0; i < length; i++) {
+        stack.push(str[i]);
+    }
+
+    // Compare characters popped from the stack with the original string
+    for (int i = 0; i < length; i++) {
+        if (str[i] != stack.pop()) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 int main() {
-    std::string input;
-    std::cout << "Enter a string: ";
-    std::getline(std::cin, input);
+    string input;
 
-    // Preprocess and display original and reversed strings
-    std::string cleanedStr = preprocess(input);
-    std::string reversedStr = reverseUsingStack(cleanedStr);
+    // Input the string
+    cout << "Enter a string: ";
+    cin >> input;
 
-    std::cout << "Original cleaned string: " << cleanedStr << std::endl;
-    std::cout << "Reversed string: " << reversedStr << std::endl;
-
-    // Check if the cleaned input is a palindrome
+    // Check if the string is a palindrome
     if (isPalindrome(input)) {
-        std::cout << "The given string is a palindrome." << std::endl;
+        cout << "The string is a palindrome." << endl;
     } else {
-        std::cout << "The given string is not a palindrome." << std::endl;
+        cout << "The string is not a palindrome." << endl;
     }
 
     return 0;
 }
+
+//Enter a string: 1234554321
+//The string is a palindrome.
 
 /*
 Enter a string: Poor Dan is in a droop
