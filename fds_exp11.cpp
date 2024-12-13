@@ -1,5 +1,5 @@
 /*
-Create a class that includees the data items (which should be template) and the priority (which should be int). The inorder list list should contain these objects, with operator <= overloaded so that the items with highest priority appear at the beginning of the list (which will make it relatively easy to retrive the highest item.)
+write cpp code to implement a priority queue using an inorder list to stor the items in the queue. create a class that includes the dataitems (which should be template) and the priority (which should be int). The order list should contain these objects with the operator <= overloaded so that items with highest priority appear at the beginning of list (which will make it relatively easy to retrievee the highest item) 
 */
 
 #include <iostream>
