@@ -40,6 +40,29 @@ def multiply_matrices(matrix_a, matrix_b):
         result.append(row)
     return result
 
+def matrix_multiplication(matrix1, matrix2):
+    try:
+        # Get the dimensions of the matrices
+        rows_matrix1, cols_matrix1 = len(matrix1), len(matrix1[0])
+        rows_matrix2, cols_matrix2 = len(matrix2), len(matrix2[0])
+
+        # Check if the matrices can be multiplied
+        if cols_matrix1 != rows_matrix2:
+            return "Error: Matrices are not compatible for multiplication."
+
+        # Initialize the result matrix with zeros
+        result = [[0 for _ in range(cols_matrix2)] for _ in range(rows_matrix1)]
+
+        # Perform matrix multiplication
+        for i in range(rows_matrix1):
+            for j in range(cols_matrix2):
+                for k in range(cols_matrix1):
+                    result[i][j] += matrix1[i][k] * matrix2[k][j]
+
+        return result
+    except IndexError:
+        return "Error: Invalid matrix format. Ensure each row has the same number of elements."
+
 # Function to transpose a matrix
 def transpose_matrix(matrix):
     result = []
