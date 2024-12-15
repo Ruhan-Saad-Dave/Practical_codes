@@ -26,11 +26,11 @@ public:
     do{
       putpixel(x1 + x0 + x, y0 - y1 + y, 15);
       putpixel(x1 + x0 + y, y0 - y1 + x, 15);
-      putpixel(x1 + x0 + y, y0 - y1 - y, 15);
       putpixel(x1 + x0 + x, y0 - y1 - y, 15);
+      putpixel(x1 + x0 - y, y0 - y1 + x, 15);
       putpixel(x1 + x0 - x, y0 - y1 - y, 15);
       putpixel(x1 + x0 - y, y0 - y1 - x, 15);
-      putpixel(x1 + x0 - y, y0 - y1 + x, 15);
+      putpixel(x1 + x0 + y, y0 - y1 - x, 15);
       putpixel(x1 + x0 - x, y0 - y1 + y, 15);
       if (d <= 0){
         d = d + 4*x + 6;
