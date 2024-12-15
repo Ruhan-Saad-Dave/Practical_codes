@@ -62,6 +62,9 @@ int main() {
             break;
     }
     delay(2000);
+    closegraph();
+    getch();
+    return 0;
 }
 
 void Lineclip::drawwindow() {
