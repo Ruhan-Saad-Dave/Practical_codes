@@ -62,18 +62,16 @@ Coordinate Lineclip::setcode(Coordinate p) {
 int Lineclip::visibility(Coordinate p1, Coordinate p2) {
     int i, flag = 0;
     for (i = 0; i < 4; i++) {
-        if (p1.code[i] != '0' || (p2.code[i] == '1'))
-            flag = '0';
+        if (p1.code[i] == '1' || (p2.code[i] == '1'))
+            flag = 1;
     }
     if (flag == 0)
         return 0;
 
     for (i = 0; i < 4; i++) {
-        if (p1.code[i] == p2.code[i] && (p2.code[i] == '1'))
-            flag = '0';
+        if ((p1.code[i] == '1') && (p2.code[i] == '1'))
+            return 1;
     }
-    if (flag == 0)
-        return 1;
     
     return 2;
 }
