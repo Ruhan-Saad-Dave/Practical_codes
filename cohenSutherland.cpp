@@ -20,53 +20,6 @@ public:
     Coordinate resetendpt(Coordinate p1, Coordinate p2);
 };
 
-int main() {
-    Lineclip lc;
-    int gd = DETECT, v, gm;
-    Coordinate p1, p2, p3, p4, ptemp;
-
-    cout << "\n Enter x1 and y1\n";
-    cin >> p1.x >> p1.y;
-    cout << "\n Enter x2 and y2\n";
-    cin >> p2.x >> p2.y;
-
-    initgraph(&gd, &gm, NULL);
-    lc.drawwindow();
-    delay(2000);
-    lc.drawline(p1, p2);
-    delay(2000);
-    cleardevice();
-    delay(2000);
-
-    p1 = lc.setcode(p1);
-    p2 = lc.setcode(p2);
-    v = lc.visibility(p1, p2);
-    delay(2000);
-
-    switch (v) {
-        case 0:
-            lc.drawwindow();
-            delay(2000);
-            lc.drawline(p1, p2);
-            break;
-        case 1:
-            lc.drawwindow();
-            delay(2000);
-            break;
-        case 2:
-            p3 = lc.resetendpt(p1, p2);
-            p4 = lc.resetendpt(p2, p1);
-            lc.drawwindow();
-            delay(2000);
-            lc.drawline(p3, p4);
-            break;
-    }
-    delay(2000);
-    closegraph();
-    getch();
-    return 0;
-}
-
 void Lineclip::drawwindow() {
     line(150, 100, 450, 100);
     line(450, 100, 450, 350);
@@ -161,4 +114,51 @@ Coordinate Lineclip::resetendpt(Coordinate p1, Coordinate p2) {
     } else {
         return p1;
     }
+}
+
+int main() {
+    Lineclip lc;
+    int gd = DETECT, v, gm;
+    Coordinate p1, p2, p3, p4, ptemp;
+
+    cout << "\n Enter x1 and y1\n";
+    cin >> p1.x >> p1.y;
+    cout << "\n Enter x2 and y2\n";
+    cin >> p2.x >> p2.y;
+
+    initgraph(&gd, &gm, NULL);
+    lc.drawwindow();
+    delay(2000);
+    lc.drawline(p1, p2);
+    delay(2000);
+    cleardevice();
+    delay(2000);
+
+    p1 = lc.setcode(p1);
+    p2 = lc.setcode(p2);
+    v = lc.visibility(p1, p2);
+    delay(2000);
+
+    switch (v) {
+        case 0:
+            lc.drawwindow();
+            delay(2000);
+            lc.drawline(p1, p2);
+            break;
+        case 1:
+            lc.drawwindow();
+            delay(2000);
+            break;
+        case 2:
+            p3 = lc.resetendpt(p1, p2);
+            p4 = lc.resetendpt(p2, p1);
+            lc.drawwindow();
+            delay(2000);
+            lc.drawline(p3, p4);
+            break;
+    }
+    delay(2000);
+    closegraph();
+    getch();
+    return 0;
 }
