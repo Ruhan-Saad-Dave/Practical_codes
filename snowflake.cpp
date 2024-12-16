@@ -19,7 +19,7 @@ void snow(int x1, int y1, int x2, int y2, int it){
     if (it > 0){
         snow(x1, y1, x3, y3, it - 1);
         snow(x3, y3, x, y, it - 1);
-        snow(x, y, x4, xy, it - 1);
+        snow(x, y, x4, y4, it - 1);
         snow(x4, y4, x2, y2, it - 1);
     } else {
         line(x1, y1, x3, y3);
