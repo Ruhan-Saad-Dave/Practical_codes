@@ -5,7 +5,7 @@ using namespace std;
 
 class KochCurve{
   public:
-  void drawKochCurve(int x1, int y1, int x2, int y2, int iteratoin){
+  void drawKochCurve(int x1, int y1, int x2, int y2, int iteration){
     if (iteration == 0){
       line(x1, y1, x2, y2);
     } else {
