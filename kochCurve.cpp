@@ -30,11 +30,8 @@ class KochCurve{
     drawKochCurve(x1, y1, x2, y2, iteration);
 
     int x3 = (x1 + x2)/2 + (y1 - y2) * sqrt(3) / 2;
-    int y3 = (y1 + y2)/2 - (x2 - x1) * sqrt(3) / 2;
+    int y3 = (y1 + y2)/2 + (x1 - x2) * sqrt(3) / 2;
     drawKochCurve(x2, y2, x3, y3, iteration);
-
-    x3 = (x1 + x2)/2 + (y1 - y2) * sqrt(3) / 2;
-    y3 = (y1 + y2)/2 + (x1 - x2) * sqrt(3) / 2;
     drawKochCurve(x3, y3, x1, y1, iteration);
   }
 
