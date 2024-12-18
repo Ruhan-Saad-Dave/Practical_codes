@@ -4,19 +4,7 @@
 using namespace std;  
 
 class dcircle{
-private:
-int x0, y0;
 public:
-  dcircle(){
-    x0 = 0;
-    y0 = 0;
-  }
-
-  void setoff(int xx, int yy){
-    x0 = xx;
-    y0 = yy;
-  }
-
   void drawc(int x1, int y1, int r){
     float d;
     int x, y;
@@ -24,14 +12,14 @@ public:
     y = r;
     d = 3 - 2*r;
     do{
-      putpixel(x1 + x0 + x, y0 - y1 + y, 15);
-      putpixel(x1 + x0 + y, y0 - y1 + x, 15);
-      putpixel(x1 + x0 + x, y0 - y1 - y, 15);
-      putpixel(x1 + x0 - y, y0 - y1 + x, 15);
-      putpixel(x1 + x0 - x, y0 - y1 - y, 15);
-      putpixel(x1 + x0 - y, y0 - y1 - x, 15);
-      putpixel(x1 + x0 + y, y0 - y1 - x, 15);
-      putpixel(x1 + x0 - x, y0 - y1 + y, 15);
+      putpixel(x1 + x, - y1 + y, 15);
+      putpixel(x1 + y, - y1 + x, 15);
+      putpixel(x1 + x, - y1 - y, 15);
+      putpixel(x1 - y, - y1 + x, 15);
+      putpixel(x1 - x, - y1 - y, 15);
+      putpixel(x1 - y, - y1 - x, 15);
+      putpixel(x1 + y, - y1 - x, 15);
+      putpixel(x1 - x, - y1 + y, 15);
       if (d <= 0){
         d = d + 4*x + 6;
       } else{
