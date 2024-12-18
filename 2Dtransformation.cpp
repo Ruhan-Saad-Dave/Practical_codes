@@ -38,9 +38,9 @@ void rotation(float x1, float y1, float x2, float y2, float x3, float y3){
 	nx1 = xr + ((x1 - xr)*cos(theta)) - ((y1-yr)*sin(theta));
 	nx2 = xr + ((x2 - xr)*cos(theta)) - ((y2-yr)*sin(theta));
 	nx3 = xr + ((x3 - xr)*cos(theta)) - ((y3-yr)*sin(theta));
-	ny1 = yr + ((x1 - xr)*sin(theta)) - ((y1-yr)*cos(theta));
-	ny2 = yr + ((x2 - xr)*sin(theta)) - ((y2-yr)*cos(theta));
-	ny3 = yr + ((x3 - xr)*sin(theta)) - ((y3-yr)*cos(theta));
+	ny1 = yr + ((x1 - xr)*sin(theta)) + ((y1-yr)*cos(theta));
+	ny2 = yr + ((x2 - xr)*sin(theta)) + ((y2-yr)*cos(theta));
+	ny3 = yr + ((x3 - xr)*sin(theta)) + ((y3-yr)*cos(theta));
 
 	line(nx1, ny1, nx2, ny2);
 	line(nx2, ny2, nx3, ny3);
