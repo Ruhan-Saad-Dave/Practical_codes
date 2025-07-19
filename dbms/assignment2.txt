@@ -1,0 +1,173 @@
+-- Create Database
+CREATE DATABASE IF NOT EXISTS food_delivery_system;
+USE food_delivery_system;
+
+-- Table: Customer
+CREATE TABLE IF NOT EXISTS Customer (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_name VARCHAR(255) NOT NULL,
+    user_email VARCHAR(255) UNIQUE NOT NULL,
+    user_phone VARCHAR(20) UNIQUE NOT NULL,
+    user_password VARCHAR(255) NOT NULL,
+    user_city VARCHAR(255)
+);
+
+-- Table: Restaurant
+CREATE TABLE IF NOT EXISTS Restaurant (
+    res_id INT AUTO_INCREMENT PRIMARY KEY,
+    res_name VARCHAR(255) NOT NULL,
+    res_location VARCHAR(255) NOT NULL,
+    res_phone VARCHAR(20) UNIQUE NOT NULL,
+    cuisine VARCHAR(255),
+    rating DECIMAL(2, 1),
+    res_photo VARCHAR(255)
+);
+
+-- Table: Menu
+CREATE TABLE IF NOT EXISTS Menu (
+    menu_id INT AUTO_INCREMENT PRIMARY KEY,
+    res_id INT NOT NULL,
+    menu_type VARCHAR(255),
+    FOREIGN KEY (res_id) REFERENCES Restaurant(res_id)
+);
+
+-- Table: Food_item
+CREATE TABLE IF NOT EXISTS Food_item (
+    food_id INT AUTO_INCREMENT PRIMARY KEY,
+    menu_id INT NOT NULL,
+    food_name VARCHAR(255) NOT NULL,
+    food_price DECIMAL(10, 2) NOT NULL,
+    food_type VARCHAR(255),
+    food_cuisine VARCHAR(255),
+    food_photo VARCHAR(255),
+    FOREIGN KEY (menu_id) REFERENCES Menu(menu_id)
+);
+
+-- Table: Order
+CREATE TABLE IF NOT EXISTS `Order` ( -- 'Order' is a reserved keyword, so it's best to backtick it
+    order_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    food_id INT NOT NULL,
+    order_status VARCHAR(50) NOT NULL,
+    total_price DECIMAL(10, 2) NOT NULL,
+    food_quantity INT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES Customer(user_id),
+    FOREIGN KEY (food_id) REFERENCES Food_item(food_id)
+);
+
+-- Table: Payment
+CREATE TABLE IF NOT EXISTS Payment (
+    pay_id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    pay_amount DECIMAL(10, 2) NOT NULL,
+    pay_status VARCHAR(50) NOT NULL,
+    pay_method VARCHAR(50),
+    FOREIGN KEY (order_id) REFERENCES `Order`(order_id)
+);
+
+-- Table: Delivery_partner
+CREATE TABLE IF NOT EXISTS Delivery_partner (
+    dev_id INT AUTO_INCREMENT PRIMARY KEY,
+    dev_name VARCHAR(255) NOT NULL,
+    dev_phone VARCHAR(20) UNIQUE NOT NULL,
+    dev_location VARCHAR(255),
+    dev_rating DECIMAL(2, 1),
+    dev_photo VARCHAR(255)
+);
+
+-- Table: Review
+CREATE TABLE IF NOT EXISTS Review (
+    rev_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    res_id INT NOT NULL,
+    star_rating INT NOT NULL CHECK (star_rating >= 1 AND star_rating <= 5),
+    rev_content TEXT,
+    photo VARCHAR(255),
+    FOREIGN KEY (user_id) REFERENCES Customer(user_id),
+    FOREIGN KEY (res_id) REFERENCES Restaurant(res_id)
+);
+
+-- Relationship Tables (for Many-to-Many relationships or specific connections)
+
+-- Table: Delivers (between Order and Delivery_partner)
+CREATE TABLE IF NOT EXISTS Delivers (
+    order_id INT NOT NULL,
+    dev_id INT NOT NULL,
+    PRIMARY KEY (order_id, dev_id),
+    FOREIGN KEY (order_id) REFERENCES `Order`(order_id),
+    FOREIGN KEY (dev_id) REFERENCES Delivery_partner(dev_id)
+);
+
+-- Insert Dummy Values
+
+-- Customer
+INSERT INTO Customer (user_name, user_email, user_phone, user_password, user_city) VALUES
+('Alice Smith', 'alice.smith@example.com', '1112223333', 'password123', 'New York'),
+('Bob Johnson', 'bob.j@example.com', '4445556666', 'securepass', 'Los Angeles'),
+('Charlie Brown', 'charlie.b@example.com', '7778889999', 'mysecret', 'Chicago'),
+('Diana Prince', 'diana.p@example.com', '1011213141', 'wonderwoman', 'Miami'),
+('Eve Adams', 'eve.a@example.com', '1516171819', 'evepass', 'Houston');
+
+-- Restaurant
+INSERT INTO Restaurant (res_name, res_location, res_phone, cuisine, rating, res_photo) VALUES
+('Taste of Italy', '123 Main St, New York', '9876543210', 'Italian', 4.5, 'http://placehold.co/150x150/000000/FFFFFF?text=Italian'),
+('Sushi Express', '456 Oak Ave, Los Angeles', '1234567890', 'Japanese', 4.8, 'http://placehold.co/150x150/000000/FFFFFF?text=Japanese'),
+('Burger Joint', '789 Pine Ln, Chicago', '5551112222', 'American', 4.2, 'http://placehold.co/150x150/000000/FFFFFF?text=American'),
+('Curry House', '101 Elm St, Miami', '3334445555', 'Indian', 4.0, 'http://placehold.co/150x150/000000/FFFFFF?text=Indian'),
+('Vegan Delights', '202 Birch Rd, Houston', '6667778888', 'Vegan', 4.7, 'http://placehold.co/150x150/000000/FFFFFF?text=Vegan');
+
+-- Menu
+INSERT INTO Menu (res_id, menu_type) VALUES
+(1, 'Dinner'),
+(1, 'Lunch'),
+(2, 'Sushi Rolls'),
+(3, 'Burgers & Fries'),
+(4, 'Curries');
+
+-- Food_item
+INSERT INTO Food_item (menu_id, food_name, food_price, food_type, food_cuisine, food_photo) VALUES
+(1, 'Spaghetti Carbonara', 18.50, 'Main Course', 'Italian', 'http://placehold.co/150x150/000000/FFFFFF?text=Carbonara'),
+(1, 'Margherita Pizza', 15.00, 'Pizza', 'Italian', 'http://placehold.co/150x150/000000/FFFFFF?text=Pizza'),
+(2, 'California Roll', 12.75, 'Sushi', 'Japanese', 'http://placehold.co/150x150/000000/FFFFFF?text=CaliforniaRoll'),
+(3, 'Classic Cheeseburger', 10.00, 'Burger', 'American', 'http://placehold.co/150x150/000000/FFFFFF?text=Cheeseburger'),
+(4, 'Chicken Tikka Masala', 22.00, 'Curry', 'Indian', 'http://placehold.co/150x150/000000/FFFFFF?text=TikkaMasala');
+
+-- Order
+INSERT INTO `Order` (user_id, food_id, order_status, total_price, food_quantity) VALUES
+(1, 1, 'Pending', 18.50, 1),
+(2, 3, 'Delivered', 25.50, 2),
+(3, 4, 'Processing', 30.00, 3),
+(4, 5, 'Pending', 22.00, 1),
+(5, 2, 'Delivered', 15.00, 1);
+
+-- Payment
+INSERT INTO Payment (order_id, pay_amount, pay_status, pay_method) VALUES
+(1, 18.50, 'Paid', 'Credit Card'),
+(2, 25.50, 'Paid', 'PayPal'),
+(3, 30.00, 'Pending', 'Cash on Delivery'),
+(4, 22.00, 'Paid', 'Debit Card'),
+(5, 15.00, 'Paid', 'Credit Card');
+
+-- Delivery_partner
+INSERT INTO Delivery_partner (dev_name, dev_phone, dev_location, dev_rating, dev_photo) VALUES
+('David Lee', '0001112222', 'New York', 4.3, 'http://placehold.co/150x150/000000/FFFFFF?text=David'),
+('Sarah Chen', '9998887777', 'Los Angeles', 4.6, 'http://placehold.co/150x150/000000/FFFFFF?text=Sarah'),
+('Mike Davis', '6665554444', 'Chicago', 4.1, 'http://placehold.co/150x150/000000/FFFFFF?text=Mike'),
+('Jessica White', '3332221111', 'Miami', 4.9, 'http://placehold.co/150x150/000000/FFFFFF?text=Jessica'),
+('Chris Green', '1110009999', 'Houston', 4.0, 'http://placehold.co/150x150/000000/FFFFFF?text=Chris');
+
+-- Review
+INSERT INTO Review (user_id, res_id, star_rating, rev_content, photo) VALUES
+(1, 1, 5, 'Absolutely delicious pasta!', 'http://placehold.co/150x150/000000/FFFFFF?text=PastaReview'),
+(2, 2, 4, 'Great sushi, fresh ingredients.', 'http://placehold.co/150x150/000000/FFFFFF?text=SushiReview'),
+(3, 3, 3, 'Burgers were okay, a bit greasy.', NULL),
+(4, 4, 5, 'Best chicken tikka masala I\'ve ever had!', 'http://placehold.co/150x150/000000/FFFFFF?text=CurryReview'),
+(5, 1, 4, 'Good pizza, but a bit slow on delivery.', NULL);
+
+-- Delivers
+INSERT INTO Delivers (order_id, dev_id) VALUES
+(1, 1),
+(2, 2),
+(3, 3),
+(4, 4),
+(5, 5);
