@@ -1,0 +1,157 @@
+-- Create Tables
+-- Oracle does not support IF NOT EXISTS in CREATE TABLE, so we use DROP TABLE to ensure a clean slate.
+-- Dropping tables in reverse order of foreign key dependencies.
+DROP TABLE manages;
+DROP TABLE works;
+DROP TABLE employee;
+DROP TABLE company;
+
+CREATE TABLE employee (
+    employee_name VARCHAR2(50) PRIMARY KEY,
+    street VARCHAR2(100),
+    city VARCHAR2(50)
+);
+
+CREATE TABLE works (
+    employee_name VARCHAR2(50),
+    company_name VARCHAR2(50),
+    salary NUMBER(10, 2),
+    CONSTRAINT pk_works PRIMARY KEY (employee_name),
+    CONSTRAINT fk_works_employee FOREIGN KEY (employee_name) REFERENCES employee(employee_name)
+);
+
+CREATE TABLE company (
+    company_name VARCHAR2(50) PRIMARY KEY,
+    city VARCHAR2(50)
+);
+
+CREATE TABLE manages (
+    employee_name VARCHAR2(50),
+    manager_name VARCHAR2(50),
+    CONSTRAINT pk_manages PRIMARY KEY (employee_name),
+    CONSTRAINT fk_manages_employee FOREIGN KEY (employee_name) REFERENCES employee(employee_name),
+    CONSTRAINT fk_manages_manager FOREIGN KEY (manager_name) REFERENCES employee(employee_name)
+);
+
+-- Insert Data
+-- Oracle requires single INSERT statements or a different syntax for multiple rows.
+INSERT ALL
+    INTO employee (employee_name, street, city) VALUES ('John Doe', '123 Main St', 'New York')
+    INTO employee (employee_name, street, city) VALUES ('Jane Smith', '456 Oak Ave', 'Pune')
+    INTO employee (employee_name, street, city) VALUES ('Peter Jones', '789 Pine Ln', 'Mumbai')
+    INTO employee (employee_name, street, city) VALUES ('Mary Brown', '101 Maple Rd', 'Nasik')
+    INTO employee (employee_name, street, city) VALUES ('Robert White', '202 Birch Blvd', 'New York')
+SELECT 1 FROM DUAL;
+
+INSERT ALL
+    INTO company (company_name, city) VALUES ('First Bank Corporation', 'New York')
+    INTO company (company_name, city) VALUES ('Small Bank Corporation', 'Mumbai')
+    INTO company (company_name, city) VALUES ('Big Tech Inc', 'Pune')
+    INTO company (company_name, city) VALUES ('Global Solutions', 'Nasik')
+    INTO company (company_name, city) VALUES ('Finance Corp', 'New York')
+SELECT 1 FROM DUAL;
+
+INSERT ALL
+    INTO works (employee_name, company_name, salary) VALUES ('John Doe', 'First Bank Corporation', 12000.00)
+    INTO works (employee_name, company_name, salary) VALUES ('Jane Smith', 'Big Tech Inc', 55000.00)
+    INTO works (employee_name, company_name, salary) VALUES ('Peter Jones', 'Small Bank Corporation', 8000.00)
+    INTO works (employee_name, company_name, salary) VALUES ('Mary Brown', 'Global Solutions', 25000.00)
+    INTO works (employee_name, company_name, salary) VALUES ('Robert White', 'First Bank Corporation', 18000.00)
+SELECT 1 FROM DUAL;
+
+INSERT ALL
+    INTO manages (employee_name, manager_name) VALUES ('John Doe', 'Robert White')
+    INTO manages (employee_name, manager_name) VALUES ('Jane Smith', 'John Doe')
+    INTO manages (employee_name, manager_name) VALUES ('Peter Jones', 'Mary Brown')
+    INTO manages (employee_name, manager_name) VALUES ('Mary Brown', 'Jane Smith')
+    INTO manages (employee_name, manager_name) VALUES ('Robert White', 'Peter Jones')
+SELECT 1 FROM DUAL;
+
+-- -----------------------------------------------------------------------------
+-- SQL Queries
+-- -----------------------------------------------------------------------------
+
+-- 1. Find the names, street address, and cities of residence for all employees who work for 'First Bank Corporation' and earn more than $10,000.
+SELECT
+    e.employee_name,
+    e.street,
+    e.city
+FROM
+    employee e
+JOIN
+    works w ON e.employee_name = w.employee_name
+WHERE
+    w.company_name = 'First Bank Corporation' AND w.salary > 10000;
+
+-- 2. Find the names of all employees in the database who live in the same cities as the companies for which they work.
+SELECT
+    e.employee_name
+FROM
+    employee e
+JOIN
+    works w ON e.employee_name = w.employee_name
+JOIN
+    company c ON w.company_name = c.company_name
+WHERE
+    e.city = c.city;
+
+-- 3. Display employee details that live in cities Pune, Mumbai, and Nasik.
+SELECT
+    *
+FROM
+    employee
+WHERE
+    city IN ('Pune', 'Mumbai', 'Nasik');
+
+-- 4. List employees from ‘First Bank Corporation’ that earn a salary more than all employees of ‘Small Bank Corporation’.
+SELECT
+    e.employee_name
+FROM
+    employee e
+JOIN
+    works w ON e.employee_name = w.employee_name
+WHERE
+    w.company_name = 'First Bank Corporation'
+    AND w.salary > (
+        SELECT
+            MAX(salary)
+        FROM
+            works
+        WHERE
+            company_name = 'Small Bank Corporation'
+    );
+
+-- 5. Create a view that will display employee details along with the name of his/her manager.
+-- The original error was `ORA-00904: "M"."EMPLOYEE_NAME": invalid identifier`. This happens because `manages.employee_name` is the employee being managed, and `manages.manager_name` is the manager. The join was correct, but Oracle was having trouble with a name clash or an invalid reference. The query is correct as it stands, assuming the tables are created. The error was likely due to the previously failed `CREATE TABLE` statements.
+CREATE OR REPLACE VIEW employee_with_manager AS
+SELECT
+    e.employee_name,
+    e.street,
+    e.city,
+    m.manager_name
+FROM
+    employee e
+JOIN
+    manages m ON e.employee_name = m.employee_name;
+
+-- To display the view:
+SELECT * FROM employee_with_manager;
+
+-- 6. Find average salary of employees of ‘First Bank Corporation’.
+SELECT
+    AVG(salary) AS average_salary
+FROM
+    works
+WHERE
+    company_name = 'First Bank Corporation';
+
+-- 7. Give employees of ‘First Bank Corporation’ a 15% rise if salary is less than 20000.
+-- The original `ORA-00904` error was likely because the `works` table was not created due to prior errors. The query itself is syntactically correct for Oracle.
+UPDATE works
+SET
+    salary = salary * 1.15
+WHERE
+    company_name = 'First Bank Corporation' AND salary < 20000;
+
+-- To verify the update:
+SELECT * FROM works WHERE company_name = 'First Bank Corporation';
