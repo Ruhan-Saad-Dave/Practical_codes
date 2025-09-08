@@ -1,0 +1,147 @@
+-- Drop tables in the correct order, with CASCADE CONSTRAINTS for Oracle compatibility.
+-- This ensures a clean slate and avoids "ORA-02449: unique/primary keys in table referenced by foreign keys" errors.
+DROP TABLE Borrower CASCADE CONSTRAINTS;
+DROP TABLE Depositor CASCADE CONSTRAINTS;
+DROP TABLE Loan CASCADE CONSTRAINTS;
+DROP TABLE Account CASCADE CONSTRAINTS;
+DROP TABLE customer CASCADE CONSTRAINTS;
+DROP TABLE branch CASCADE CONSTRAINTS;
+
+-- Create the database tables with appropriate primary and foreign keys.
+
+CREATE TABLE branch (
+branch_id VARCHAR(20) PRIMARY KEY,
+branch_name VARCHAR(50) NOT NULL UNIQUE,
+branch_city VARCHAR(50),
+assets DECIMAL(15, 2)
+);
+
+CREATE TABLE customer (
+cust_id VARCHAR(20) PRIMARY KEY,
+cust_name VARCHAR(50) NOT NULL,
+cust_street VARCHAR(50),
+cust_city VARCHAR(50)
+);
+
+CREATE TABLE Account (
+Acc_no VARCHAR(20) PRIMARY KEY,
+branch_name VARCHAR(50),
+balance DECIMAL(15, 2) CHECK (balance >= 0),
+FOREIGN KEY (branch_name) REFERENCES branch(branch_name)
+);
+
+CREATE TABLE Depositor (
+cust_id VARCHAR(20),
+acc_no VARCHAR(20),
+PRIMARY KEY (cust_id, acc_no),
+FOREIGN KEY (cust_id) REFERENCES customer(cust_id),
+FOREIGN KEY (acc_no) REFERENCES Account(Acc_no)
+);
+
+CREATE TABLE Loan (
+loan_no VARCHAR(20) PRIMARY KEY,
+branch_id VARCHAR(20),
+amount DECIMAL(15, 2) CHECK (amount >= 0),
+FOREIGN KEY (branch_id) REFERENCES branch(branch_id)
+);
+
+CREATE TABLE Borrower (
+cust_id VARCHAR(20),
+loan_no VARCHAR(20),
+PRIMARY KEY (cust_id, loan_no),
+FOREIGN KEY (cust_id) REFERENCES customer(cust_id),
+FOREIGN KEY (loan_no) REFERENCES Loan(loan_no)
+);
+
+-- Insert sample data into each table.
+
+-- branch table
+INSERT INTO branch (branch_id, branch_name, branch_city, assets) VALUES ('B001', 'Nigdi', 'Pune', 5000000.00);
+INSERT INTO branch (branch_id, branch_name, branch_city, assets) VALUES ('B002', 'Akurdi', 'Pune', 7500000.00);
+INSERT INTO branch (branch_id, branch_name, branch_city, assets) VALUES ('B003', 'Chinchwad', 'Pune', 6000000.00);
+INSERT INTO branch (branch_id, branch_name, branch_city, assets) VALUES ('B004', 'Dighi', 'Pune', 8000000.00);
+
+-- customer table
+INSERT INTO customer (cust_id, cust_name, cust_street, cust_city) VALUES ('C101', 'Alice', 'Street A', 'Pune');
+INSERT INTO customer (cust_id, cust_name, cust_street, cust_city) VALUES ('C102', 'Bob', 'Street B', 'Pune');
+INSERT INTO customer (cust_id, cust_name, cust_street, cust_city) VALUES ('C103', 'Charlie', 'Street C', 'Pune');
+INSERT INTO customer (cust_id, cust_name, cust_street, cust_city) VALUES ('C104', 'David', 'Street D', 'Pune');
+INSERT INTO customer (cust_id, cust_name, cust_street, cust_city) VALUES ('C105', 'Eva', 'Street E', 'Pune');
+
+-- Account table
+INSERT INTO Account (Acc_no, branch_name, balance) VALUES ('A001', 'Nigdi', 15000.00);
+INSERT INTO Account (Acc_no, branch_name, balance) VALUES ('A002', 'Nigdi', 10000.00);
+INSERT INTO Account (Acc_no, branch_name, balance) VALUES ('A003', 'Akurdi', 25000.00);
+INSERT INTO Account (Acc_no, branch_name, balance) VALUES ('A004', 'Akurdi', 5000.00);
+INSERT INTO Account (Acc_no, branch_name, balance) VALUES ('A005', 'Chinchwad', 12500.00);
+INSERT INTO Account (Acc_no, branch_name, balance) VALUES ('A006', 'Dighi', 18000.00);
+INSERT INTO Account (Acc_no, branch_name, balance) VALUES ('A007', 'Nigdi', 11000.00);
+
+-- Depositor table
+INSERT INTO Depositor (cust_id, acc_no) VALUES ('C101', 'A001');
+INSERT INTO Depositor (cust_id, acc_no) VALUES ('C102', 'A002');
+INSERT INTO Depositor (cust_id, acc_no) VALUES ('C103', 'A003');
+INSERT INTO Depositor (cust_id, acc_no) VALUES ('C104', 'A004');
+INSERT INTO Depositor (cust_id, acc_no) VALUES ('C105', 'A005');
+INSERT INTO Depositor (cust_id, acc_no) VALUES ('C102', 'A006');
+INSERT INTO Depositor (cust_id, acc_no) VALUES ('C101', 'A007');
+
+-- Loan table
+INSERT INTO Loan (loan_no, branch_id, amount) VALUES ('L101', 'B001', 5000.00);
+INSERT INTO Loan (loan_no, branch_id, amount) VALUES ('L102', 'B002', 15000.00);
+INSERT INTO Loan (loan_no, branch_id, amount) VALUES ('L103', 'B001', 25000.00);
+INSERT INTO Loan (loan_no, branch_id, amount) VALUES ('L104', 'B003', 10000.00);
+
+-- Borrower table
+INSERT INTO Borrower (cust_id, loan_no) VALUES ('C101', 'L101');
+INSERT INTO Borrower (cust_id, loan_no) VALUES ('C102', 'L102');
+INSERT INTO Borrower (cust_id, loan_no) VALUES ('C103', 'L103');
+INSERT INTO Borrower (cust_id, loan_no) VALUES ('C104', 'L104');
+
+-- 1. Find the branches where average account balance > 12000.
+SELECT branch_name
+FROM Account
+GROUP BY branch_name
+HAVING AVG(balance) > 12000;
+
+-- 2. Find all customers who have an account or loan or both at bank.
+SELECT cust_name
+FROM customer
+WHERE cust_id IN (
+SELECT cust_id FROM Depositor
+UNION
+SELECT cust_id FROM Borrower
+);
+
+-- 3. Find all customers who have both account but not loan at bank.
+SELECT DISTINCT T1.cust_name
+FROM customer T1
+JOIN Depositor T2 ON T1.cust_id = T2.cust_id
+LEFT JOIN Borrower T3 ON T1.cust_id = T3.cust_id
+WHERE T3.cust_id IS NULL;
+
+-- 4. Delete all tuples at every branch located in ‘Nigdi’.
+-- Note: This is a cascading deletion. We must delete from child tables first.
+DELETE FROM Depositor WHERE acc_no IN (SELECT Acc_no FROM Account WHERE branch_name = 'Nigdi');
+DELETE FROM Borrower WHERE loan_no IN (SELECT loan_no FROM Loan WHERE branch_id = (SELECT branch_id FROM branch WHERE branch_name = 'Nigdi'));
+DELETE FROM Account WHERE branch_name = 'Nigdi';
+DELETE FROM Loan WHERE branch_id = (SELECT branch_id FROM branch WHERE branch_name = 'Nigdi');
+DELETE FROM branch WHERE branch_name = 'Nigdi';
+
+-- 5. Find Maximum loan amount in branch ‘Nigdi’
+SELECT MAX(T1.amount) AS max_loan_amount
+FROM Loan T1
+JOIN branch T2 ON T1.branch_id = T2.branch_id
+WHERE T2.branch_name = 'Nigdi';
+
+-- 6. Find no. of depositors at each branch.
+SELECT T3.branch_name, COUNT(DISTINCT T1.cust_id) AS number_of_depositors
+FROM Depositor T1
+JOIN Account T2 ON T1.acc_no = T2.Acc_no
+JOIN branch T3 ON T2.branch_name = T3.branch_name
+GROUP BY T3.branch_name;
+
+-- 7. For all accounts in Akurdi branch increase the balance by 10%
+UPDATE Account
+SET balance = balance * 1.10
+WHERE branch_name = 'Akurdi';
