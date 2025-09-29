@@ -1,10 +1,8 @@
--- Create Tables
--- Oracle does not support IF NOT EXISTS in CREATE TABLE, so we use DROP TABLE to ensure a clean slate.
--- Dropping tables in reverse order of foreign key dependencies.
-DROP TABLE manages;
+
 DROP TABLE works;
 DROP TABLE employee;
 DROP TABLE company;
+DROP TABLE manages;
 
 CREATE TABLE employee (
     employee_name VARCHAR2(50) PRIMARY KEY,
@@ -67,9 +65,7 @@ INSERT ALL
     INTO manages (employee_name, manager_name) VALUES ('Robert White', 'Peter Jones')
 SELECT 1 FROM DUAL;
 
--- -----------------------------------------------------------------------------
--- SQL Queries
--- -----------------------------------------------------------------------------
+----------------------------------------
 
 -- 1. Find the names, street address, and cities of residence for all employees who work for 'First Bank Corporation' and earn more than $10,000.
 SELECT
@@ -122,7 +118,6 @@ WHERE
     );
 
 -- 5. Create a view that will display employee details along with the name of his/her manager.
--- The original error was `ORA-00904: "M"."EMPLOYEE_NAME": invalid identifier`. This happens because `manages.employee_name` is the employee being managed, and `manages.manager_name` is the manager. The join was correct, but Oracle was having trouble with a name clash or an invalid reference. The query is correct as it stands, assuming the tables are created. The error was likely due to the previously failed `CREATE TABLE` statements.
 CREATE OR REPLACE VIEW employee_with_manager AS
 SELECT
     e.employee_name,
@@ -134,7 +129,6 @@ FROM
 JOIN
     manages m ON e.employee_name = m.employee_name;
 
--- To display the view:
 SELECT * FROM employee_with_manager;
 
 -- 6. Find average salary of employees of ‘First Bank Corporation’.
@@ -146,12 +140,12 @@ WHERE
     company_name = 'First Bank Corporation';
 
 -- 7. Give employees of ‘First Bank Corporation’ a 15% rise if salary is less than 20000.
--- The original `ORA-00904` error was likely because the `works` table was not created due to prior errors. The query itself is syntactically correct for Oracle.
 UPDATE works
 SET
     salary = salary * 1.15
 WHERE
     company_name = 'First Bank Corporation' AND salary < 20000;
 
--- To verify the update:
 SELECT * FROM works WHERE company_name = 'First Bank Corporation';
+
+
