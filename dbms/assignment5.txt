@@ -1,0 +1,99 @@
+SET SERVEROUTPUT ON;
+COMMIT;
+
+-- 1. COMPLETE CLEANUP SCRIPT (with new names) --
+BEGIN
+   EXECUTE IMMEDIATE 'DROP PROCEDURE proc_Calculate_Grades';
+   DBMS_OUTPUT.PUT_LINE('Procedure proc_Calculate_Grades dropped.');
+EXCEPTION
+   WHEN OTHERS THEN
+      IF SQLCODE != -4043 THEN RAISE; END IF;
+END;
+/
+
+BEGIN
+   EXECUTE IMMEDIATE 'DROP TABLE Grade_Report CASCADE CONSTRAINTS';
+   DBMS_OUTPUT.PUT_LINE('Table Grade_Report dropped.');
+EXCEPTION
+   WHEN OTHERS THEN
+      IF SQLCODE != -942 THEN RAISE; END IF;
+END;
+/
+
+BEGIN
+   EXECUTE IMMEDIATE 'DROP TABLE Student_Scores CASCADE CONSTRAINTS';
+   DBMS_OUTPUT.PUT_LINE('Table Student_Scores dropped.');
+EXCEPTION
+   WHEN OTHERS THEN
+      IF SQLCODE != -942 THEN RAISE; END IF;
+END;
+/
+
+-- 2. REBUILD SCRIPT (with new names) --
+PROMPT Creating tables...
+CREATE TABLE Student_Scores (
+    Roll_No     NUMBER PRIMARY KEY,
+    Name        VARCHAR2(50) NOT NULL,
+    Total_Marks NUMBER NOT NULL
+);
+
+CREATE TABLE Grade_Report (
+    Roll_No NUMBER PRIMARY KEY,
+    Name    VARCHAR2(50) NOT NULL,
+    Class   VARCHAR2(50) NOT NULL
+);
+
+PROMPT Inserting data...
+INSERT INTO Student_Scores (Roll_No, Name, Total_Marks) VALUES (1, 'ABC', 1000);
+INSERT INTO Student_Scores (Roll_No, Name, Total_Marks) VALUES (2, 'XYZ', 960);
+INSERT INTO Student_Scores (Roll_No, Name, Total_Marks) VALUES (3, 'PQR', 850);
+INSERT INTO Student_Scores (Roll_No, Name, Total_Marks) VALUES (4, 'LMN', 820);
+COMMIT;
+
+PROMPT Creating procedure...
+CREATE OR REPLACE PROCEDURE proc_Calculate_Grades (
+    p_Roll_No_In IN NUMBER
+)
+AS
+    v_Name        Student_Scores.Name%TYPE;
+    v_Total_Marks Student_Scores.Total_Marks%TYPE;
+    v_Class       Grade_Report.Class%TYPE;
+BEGIN
+    SELECT Name, Total_Marks
+    INTO v_Name, v_Total_Marks
+    FROM Student_Scores
+    WHERE Roll_No = p_Roll_No_In;
+
+    IF v_Total_Marks BETWEEN 990 AND 1500 THEN v_Class := 'Distinction';
+    ELSIF v_Total_Marks BETWEEN 900 AND 989 THEN v_Class := 'First Class';
+    ELSIF v_Total_Marks BETWEEN 825 AND 899 THEN v_Class := 'Higher Second Class';
+    ELSE v_Class := 'Fail';
+    END IF;
+
+    INSERT INTO Grade_Report (Roll_No, Name, Class)
+    VALUES (p_Roll_No_In, v_Name, v_Class);
+
+    DBMS_OUTPUT.PUT_LINE('Processed Roll No ' || p_Roll_No_In || '. Class: ' || v_Class);
+
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('ERROR: Roll No ' || p_Roll_No_In || ' not found in Student_Scores.');
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('ANOTHER ERROR OCCURRED: ' || SQLERRM);
+END proc_Calculate_Grades;
+/
+
+-- 3. EXECUTION SCRIPT (with new names) --
+PROMPT Executing procedure for all students...
+BEGIN
+    proc_Calculate_Grades(1);
+    proc_Calculate_Grades(2);
+    proc_Calculate_Grades(3);
+    proc_Calculate_Grades(4);
+    proc_Calculate_Grades(99);
+    COMMIT;
+END;
+/
+
+PROMPT --- Final Results in the Grade_Report Table ---
+SELECT Roll_No, Name, Class FROM Grade_Report ORDER BY Roll_No;
