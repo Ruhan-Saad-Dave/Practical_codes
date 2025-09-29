@@ -1,0 +1,64 @@
+SET SERVEROUT ON
+SET VERIFY OFF
+
+CREATE TABLE borrower(roll_no NUMBER , name VARCHAR2(25), dateofissue DATE,name_of_book
+VARCHAR2(25), status VARCHAR2(20));
+CREATE TABLE fine(roll_no NUMBER,date_of_return DATE,amt NUMBER);
+INSERT INTO borrower VALUES(45,'ASHUTOSH',TO_DATE('01-08-2022','DD-MM-YYYY'),'HARRY POTTER','PENDING');
+INSERT INTO borrower VALUES(46,'ARYAN',TO_DATE('15-08-2022','DD-MM-YYYY'),'DARK MATTER','PENDING');
+INSERT INTO borrower VALUES(47,'ROHAN',TO_DATE('24-08-2022','DD-MM-YYYY'),'SILENT HILL','PENDING');
+INSERT INTO borrower VALUES(48,'SANKET',TO_DATE('26-08-2022','DD-MM-YYYY'),'GOD OF WAR','PENDING');
+INSERT INTO borrower VALUES(49,'SARTHAK',TO_DATE('09-09-2022','DD-MM-YYYY'),'SPIDER-MAN','PENDING');
+
+DECLARE
+    i_roll_no     NUMBER;
+    name_of_book  VARCHAR2(25);
+    no_of_days    NUMBER;
+    return_date   DATE := SYSDATE;
+    temp          NUMBER;
+    doi           DATE;
+    fine          NUMBER;
+BEGIN
+    i_roll_no := &i_roll_no;
+    name_of_book := '&nameofbook';
+
+    SELECT date_of_issue INTO doi 
+    FROM borrower 
+    WHERE borrower.roll_number = i_roll_no AND borrower.name_of_book = name_of_book;
+
+    -- Calculate the number of days difference
+    no_of_days := TRUNC(return_date) - TRUNC(doi);
+
+    DBMS_OUTPUT.PUT_LINE('Number of days late: ' || no_of_days);
+
+    IF (no_of_days > 15 AND no_of_days <= 30) THEN
+        fine := 5 * no_of_days;
+    ELSIF (no_of_days > 30) THEN
+        temp := no_of_days - 30;
+        fine := 150 + temp * 50;
+    ELSE
+        fine := 0;  -- Assign a fine of 0 for returns within the 15-day limit
+    END IF;
+
+    DBMS_OUTPUT.PUT_LINE('Calculated fine: ' || fine);
+
+    INSERT INTO fine VALUES (i_roll_no, return_date, fine);
+
+    UPDATE borrower 
+    SET status = 'RETURNED' 
+    WHERE roll_number = i_roll_no;
+    
+    COMMIT; -- Add a COMMIT to save the changes
+    DBMS_OUTPUT.PUT_LINE('Transaction committed successfully.');
+    
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('Error: No book found for the given roll number and book name.');
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('An unexpected error occurred: ' || SQLERRM);
+END;
+/
+
+
+select * from borrower;
+select * from fine;
