@@ -1,0 +1,118 @@
+-- =====================================================================
+-- Description: Oracle SQL script to manage student attendance status.
+-- 1. Creates the necessary tables (stud21 and d_stud).
+-- 2. Inserts sample data into stud21.
+-- 3. Uses a PL/SQL block with an explicit cursor to:
+--    - Find students with attendance less than 75%.
+--    - Update their status to 'D' (Detained).
+--    - Log the details of detained students into the d_stud table.
+-- 4. Displays the contents of the tables before and after the operation.
+-- =====================================================================
+
+-- To see the output from DBMS_OUTPUT, run this command in your SQL client first:
+-- SET SERVEROUTPUT ON;
+
+-- Clean up previous versions of the tables, if they exist
+BEGIN
+   EXECUTE IMMEDIATE 'DROP TABLE stud21';
+EXCEPTION
+   WHEN OTHERS THEN
+      IF SQLCODE != -942 THEN
+         RAISE;
+      END IF;
+END;
+/
+
+BEGIN
+   EXECUTE IMMEDIATE 'DROP TABLE d_stud';
+EXCEPTION
+   WHEN OTHERS THEN
+      IF SQLCODE != -942 THEN
+         RAISE;
+      END IF;
+END;
+/
+
+-- 1. Create the required tables
+CREATE TABLE stud21(
+  roll NUMBER(4) PRIMARY KEY,
+  att NUMBER(4),
+  status VARCHAR2(1)
+);
+
+CREATE TABLE d_stud(
+  roll NUMBER(4),
+  att NUMBER(4)
+);
+
+-- 2. Insert sample data for testing
+INSERT INTO stud21 (roll, att, status) VALUES (1001, 85, NULL);
+INSERT INTO stud21 (roll, att, status) VALUES (1002, 70, NULL);
+INSERT INTO stud21 (roll, att, status) VALUES (1003, 92, NULL);
+INSERT INTO stud21 (roll, att, status) VALUES (1004, 65, NULL);
+INSERT INTO stud21 (roll, att, status) VALUES (1005, 74, NULL);
+INSERT INTO stud21 (roll, att, status) VALUES (1006, 80, NULL);
+COMMIT;
+
+-- 3. Display the initial state of the tables
+PROMPT '--- Data in stud21 BEFORE running the PL/SQL block ---'
+SELECT * FROM stud21 ORDER BY roll;
+
+PROMPT '--- Data in d_stud BEFORE running the PL/SQL block ---'
+SELECT * FROM d_stud ORDER BY roll;
+
+-- 4. PL/SQL block to update student status using an explicit cursor
+DECLARE
+  -- Declare a cursor to select students with attendance less than 75
+  CURSOR crsr_att IS
+    SELECT roll, att, status FROM stud21 WHERE att < 75;
+
+  -- Declare variables to hold the data fetched from the cursor
+  -- Using %TYPE is good practice as it adapts to table column changes
+  mroll   stud21.roll%TYPE;
+  matt    stud21.att%TYPE;
+  mstatus stud21.status%TYPE;
+
+BEGIN
+  -- Open the cursor to initialize it for fetching
+  OPEN crsr_att;
+
+  LOOP
+    -- Fetch the next row from the cursor into the variables
+    FETCH crsr_att INTO mroll, matt, mstatus;
+
+    -- Exit the loop if there are no more rows to fetch
+    EXIT WHEN crsr_att%NOTFOUND;
+
+    -- If a row was successfully fetched, process it
+    -- Update the student's status to 'D' (Detained) in the main table
+    UPDATE stud21
+    SET status = 'D'
+    WHERE roll = mroll;
+
+    -- Insert a record into the detained students log table
+    INSERT INTO d_stud (roll, att)
+    VALUES (mroll, matt);
+
+    -- Optional: Display a message for each student updated
+    DBMS_OUTPUT.PUT_LINE('Student with Roll No: ' || mroll || ' and attendance ' || matt || '% has been marked as Detained.');
+
+  END LOOP;
+
+  -- It's important to close the cursor after the loop to release resources
+  CLOSE crsr_att;
+
+  -- Commit the transaction to make the changes permanent
+  COMMIT;
+  DBMS_OUTPUT.PUT_LINE('---');
+  DBMS_OUTPUT.PUT_LINE('Process completed successfully. All changes have been saved.');
+
+END;
+/
+
+-- 5. Display the final state of the tables to verify the changes
+PROMPT '--- Data in stud21 AFTER running the PL/SQL block ---'
+SELECT * FROM stud21 ORDER BY roll;
+
+PROMPT '--- Data in d_stud AFTER running the PL/SQL block ---'
+SELECT * FROM d_stud ORDER BY roll;
