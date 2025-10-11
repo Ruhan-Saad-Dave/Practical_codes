@@ -1,0 +1,115 @@
+// =======================================================
+// SETUP: Create a collection and insert sample data
+// =======================================================
+
+// Drop the collection if it already exists to start fresh
+db.articles.drop();
+
+// Insert sample documents into the 'articles' collection
+db.articles.insertMany([
+  {
+    title: "Introduction to MongoDB",
+    author: "Chris Smith",
+    category: "Database",
+    likes: 150,
+    pages: 25
+  },
+  {
+    title: "Advanced Aggregation",
+    author: "Maria Garcia",
+    category: "Database",
+    likes: 300,
+    pages: 40
+  },
+  {
+    title: "Getting Started with Node.js",
+    author: "Chris Smith",
+    category: "Programming",
+    likes: 220,
+    pages: 35
+  },
+  {
+    title: "Mastering Python",
+    author: "David Lee",
+    category: "Programming",
+    likes: 450,
+    pages: 60
+  },
+  {
+    title: "The Art of Indexing",
+    author: "Maria Garcia",
+    category: "Database",
+    likes: 250,
+    pages: 30
+  },
+  {
+    title: "Web Development Basics",
+    author: "Chris Smith",
+    category: "Web",
+    likes: 180,
+    pages: 28
+  }
+]);
+
+print("✅ Sample 'articles' collection created successfully.");
+
+
+// =======================================================
+// PART 1: INDEXING 📈
+// =======================================================
+
+print("\n--- 1. INDEXING DEMONSTRATION ---");
+
+// Note: The method ensureIndex() is deprecated. The modern and correct command is createIndex().
+// We will create an index on the 'author' field in ascending order (1).
+
+print("\nCreating a single-field index on the 'author' field...");
+db.articles.createIndex({ "author": 1 });
+
+print("\nIndex created. Let's verify it exists:");
+db.articles.getIndexes();
+
+// To show that the index is being used, we can use the .explain() method.
+// A query on an indexed field will show an "IXSCAN" (Index Scan) stage,
+// which is much more efficient than a "COLLSCAN" (Collection Scan).
+
+print("\n--- Explaining a query plan for finding an author ---");
+print("Notice the 'stage': 'IXSCAN' which proves the index is used.");
+db.articles.find({ "author": "Maria Garcia" }).explain("executionStats");
+
+
+// =======================================================
+// PART 2: AGGREGATION 📊
+// =======================================================
+
+print("\n\n--- 2. AGGREGATION DEMONSTRATION ---");
+
+// Problem: We want to analyze the articles to find out how many articles each author has written,
+// their average likes, their most liked article, and a list of all their article titles.
+
+print("\nRunning an aggregation pipeline to group by author and compute stats...");
+
+const authorStats = db.articles.aggregate([
+  // Stage 1: Group documents by the 'author' field
+  {
+    $group: {
+      _id: "$author", // Group by the value in the 'author' field
+      totalArticles: { $sum: 1 }, // Count the number of articles for each author
+      averageLikes: { $avg: "$likes" }, // Calculate the average likes for each author's articles
+      mostLikes: { $max: "$likes" }, // Find the maximum likes received by an author on a single article
+      articleTitles: { $push: "$title" } // Create an array of all article titles for each author
+    }
+  },
+
+  // Stage 2: Sort the results by the total number of articles in descending order
+  {
+    $sort: {
+      totalArticles: -1 // -1 for descending order
+    }
+  }
+]);
+
+// Print the results from the aggregation pipeline
+printjson(authorStats.toArray());
+
+print("\n✅ Aggregation complete. The output above shows a summary for each author.");
