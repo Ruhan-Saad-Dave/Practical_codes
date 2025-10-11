@@ -1,0 +1,72 @@
+// =======================================================
+// 🧑‍🎓 Student Collection
+// =======================================================
+
+// --- 1. Insert Sample Documents ---
+// Using insertMany is more efficient for multiple documents.
+db.student.insertMany([
+    { "stud_id": "1", "stud_name": "Saroj", "dept": "Computer", "marks": 85 },
+    { "stud_id": "2", "stud_name": "Tej", "dept": "Computer", "marks": 65 },
+    { "stud_id": "3", "stud_name": "Hero", "dept": "Civil", "marks": 72 },
+    { "stud_id": "4", "stud_name": "Rider", "dept": "Chemical", "marks": 45 },
+    { "stud_id": "5", "stud_name": "John", "dept": "Chemical", "marks": 25 },
+    { "stud_id": "6", "stud_name": "Jane", "dept": "Civil", "marks": 90 }
+]);
+
+// --- 2. Run Queries and Operations ---
+
+// Find students having marks greater than 50
+print("\n--- Students with marks > 50 ---");
+db.student.find({ "marks": { $gt: 50 } });
+
+// Find students having marks between 50 and 80
+print("\n--- Students with marks between 50 and 80 ---");
+db.student.find({ "marks": { $gte: 50, $lte: 80 } });
+
+// Find students from the 'Computer' department with marks more than 60
+print("\n--- Computer students with marks > 60 ---");
+db.student.find({ "dept": "Computer", "marks": { $gt: 60 } });
+
+// Update marks to 30 for all students from the 'Civil' department
+print("\n--- Updating marks for all Civil students to 30 ---");
+db.student.updateMany(
+    { "dept": "Civil" },
+    { $set: { "marks": 30 } }
+);
+// Verify the update
+print("\n--- Civil students after update ---");
+db.student.find({ "dept": "Civil" });
+
+// Delete students from the 'Chemical' department having marks less than 30
+print("\n--- Deleting Chemical students with marks < 30 ---");
+db.student.deleteMany(
+    { "dept": "Chemical", "marks": { $lt: 30 } }
+);
+// Verify the deletion by checking remaining Chemical students
+print("\n--- Remaining Chemical students ---");
+db.student.find({ "dept": "Chemical" });
+
+
+// =======================================================
+// 💼 Employee Collection
+// =======================================================
+
+// --- 1. Insert Sample Documents ---
+db.employee.insertMany([
+    { "emp_id": "1", "emp_name": "Shubh", "dept": "Sales", "salary": 55000 },
+    { "emp_id": "2", "emp_name": "Shubhash", "dept": "HR", "salary": 62000 },
+    { "emp_id": "3", "emp_name": "Baji", "dept": "IT", "salary": 78000 },
+    { "emp_id": "4", "emp_name": "Ram", "dept": "HR", "salary": 48000 }
+]);
+
+// --- 2. Run Queries ---
+
+// Find employees having a salary greater than 50000
+print("\n--- Employees with salary > 50000 ---");
+db.employee.find({ "salary": { $gt: 50000 } });
+
+// Find employees having a salary between 50000 and 80000
+print("\n--- Employees with salary between 50000 and 80000 ---");
+db.employee.find({ "salary": { $gte: 50000, $lte: 80000 } });
+
+// Find employees
