@@ -1,0 +1,104 @@
+// =======================================================
+// 🏦 BANK COLLECTION: Total Balance per Branch
+// =======================================================
+
+// --- 1. Setup: Clean up and insert data ---
+db.bank.drop(); // Remove old data to ensure a fresh start
+db.bank.insertMany([
+    { "cust_id": 1, "cust_name": "Tejas", "branch": "Akurdi", "bal": 30000 },
+    { "cust_id": 2, "cust_name": "Tejal", "branch": "Akurdi", "bal": 35000 },
+    { "cust_id": 3, "cust_name": "Amey", "branch": "Pimpri", "bal": 3000 },
+    { "cust_id": 4, "cust_name": "Ajay", "branch": "Pimpri", "bal": 10000 },
+    { "cust_id": 5, "cust_name": "Ashish", "branch": "Pune", "bal": 50000 }
+]);
+print("✅ 'bank' collection created and populated.");
+
+// --- 2. Legacy Approach using MapReduce ---
+print("\n--- Running MapReduce to calculate total balance per branch ---");
+
+// The Map function emits the branch as the key and the balance as the value.
+const mapFunctionBank = function() {
+    emit(this.branch, this.bal);
+};
+
+// The Reduce function sums up all the balance values for each branch key.
+const reduceFunctionBank = function(keyBranch, valuesBalances) {
+    return Array.sum(valuesBalances);
+};
+
+// Execute the MapReduce job and store the output in a new collection called 'resultant'.
+db.bank.mapReduce(
+    mapFunctionBank,
+    reduceFunctionBank,
+    { out: "resultant" }
+);
+
+print("\nMapReduce job complete. Querying the output collection 'resultant':");
+db.resultant.find().forEach(printjson);
+
+// --- 3. Modern Approach using Aggregation Pipeline ---
+print("\n--- Running modern Aggregation to get the same result ---");
+const bankBalances = db.bank.aggregate([
+    {
+        $group: {
+            _id: "$branch", // Group documents by the 'branch' field
+            totalBalance: { $sum: "$bal" } // Sum the 'bal' field for each group
+        }
+    }
+]);
+print("\nAggregation pipeline result:");
+bankBalances.forEach(printjson);
+
+
+// =======================================================
+// 📚 BOOKS COLLECTION: Count of Books per Type
+// =======================================================
+
+// --- 1. Setup: Clean up and insert data ---
+db.books.drop(); // Remove old data
+db.books.insertMany([
+    { book_id: 1, title: "My Life", author: "Rajesh", type: "Songs" },
+    { book_id: 2, title: "Jack and Jill", author: "Raj", type: "Poem" },
+    { book_id: 3, title: "What If", author: "John", type: "Story" },
+    { book_id: 4, title: "Real Heroes", author: "Warner", type: "Real Stories" },
+    { book_id: 5, title: "Ramayana", author: "Raj", type: "Poem" },
+    { book_id: 6, title: "Temperature Rising", author: "Tejas", type: "Story" }
+]);
+print("\n\n✅ 'books' collection created and populated.");
+
+// --- 2. Legacy Approach using MapReduce ---
+print("\n--- Running MapReduce to count books of each type ---");
+
+// The Map function emits the book type as the key and the value 1 as the count.
+const mapFunctionBooks = function() {
+    emit(this.type, 1);
+};
+
+// The Reduce function sums up the 1s for each book type, effectively counting them.
+const reduceFunctionBooks = function(keyType, valuesCounts) {
+    return Array.sum(valuesCounts);
+};
+
+// Execute the MapReduce job and store the output in 'typeofbooks'.
+db.books.mapReduce(
+    mapFunctionBooks,
+    reduceFunctionBooks,
+    { out: "typeofbooks" }
+);
+
+print("\nMapReduce job complete. Querying the output collection 'typeofbooks':");
+db.typeofbooks.find().forEach(printjson);
+
+
+// --- 3. Modern Approach using Aggregation Pipeline ---
+print("\n--- Running modern Aggregation to get the same result ---");
+const bookCounts = db.books.aggregate([
+    {
+        $group: {
+            _id: "$type", // Group documents by the 'type' field
+            numberOfBooks: { $sum: 1 } // For each document in the group, add 1 to the sum
+        }
+    }
+]);
+print("\nAggregation pipeline result:");
+bookCounts.forEach(printjson);
