@@ -22,7 +22,7 @@ class MyProcess {
     }
 }
 
-public class eighth {
+public class Fit {
 
     static int nextFitPointer = 0;
 

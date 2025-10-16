@@ -1,0 +1,26 @@
+---- PNTAB for Macro: CALC ----
+Parameter Name	Index
+-------------------------
+&X             	1
+&Y             	2
+&REG           	3
+
+---- PNTAB for Macro: INCR ----
+Parameter Name	Index
+-------------------------
+&M             	1
+&N             	2
+
+---- PNTAB for Macro: CALC ----
+Parameter Name	Index
+-------------------------
+&X             	1
+&Y             	2
+&REG           	3
+
+---- PNTAB for Macro: INCR ----
+Parameter Name	Index
+-------------------------
+&M             	1
+&N             	2
+

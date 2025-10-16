@@ -112,7 +112,7 @@ class OptimalPageReplacement extends PageReplacement {
 }
 
 // ---------------- Main Driver Class ----------------
-public class ninth {
+public class Page {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
         System.out.print("Enter number of pages: ");
