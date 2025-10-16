@@ -1,0 +1,19 @@
+Enter number of memory blocks: 5
+Enter size of block 1: 100
+Enter size of block 2: 500
+Enter size of block 3: 200
+Enter size of block 4: 300
+Enter size of block 5: 600
+
+Enter number of Processes: 4
+Enter size of Process 1: 212
+Enter size of Process 2: 417
+Enter size of Process 3: 112
+Enter size of Process 4: 426
+
+--- MEMORY ALLOCATION STRATEGIES ---
+1. First Fit
+2. Next Fit
+3. Best Fit
+4. Worst Fit
+Choose an option: 3

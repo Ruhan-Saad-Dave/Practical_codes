@@ -1,0 +1,9 @@
+Enter number of processes: 4
+Enter details for Process 1 (AT BT Priority):
+0 8 3
+Enter details for Process 2 (AT BT Priority):
+1 4 1
+Enter details for Process 3 (AT BT Priority):
+2 9 4
+Enter details for Process 4 (AT BT Priority):
+3 5 2
