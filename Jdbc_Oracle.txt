@@ -1,0 +1,73 @@
+package jdbc;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
+
+
+public class db {
+    public static void main(String[] args) {
+        Connection con = null;
+        Statement st = null;
+        ResultSet rs = null;
+
+        try {
+            
+            Class.forName("oracle.jdbc.driver.OracleDriver");
+
+          
+            String url = "jdbc:oracle:thin:@172.25.0.26:1521:xe"; 
+            String user = "System";                               
+            String password = "Security123";                        
+            con = DriverManager.getConnection(url, user, password);
+            System.out.println("Connected to Oracle database successfully.");
+
+
+            st = con.createStatement();
+
+        
+            String createTableSQL = "CREATE TABLE conndemo(name VARCHAR2(25), roll NUMBER, marks NUMBER)";
+            try {
+                st.executeUpdate(createTableSQL);
+                System.out.println("Table created successfully.");
+            } catch (Exception e) {
+                System.out.println("Table might already exist: " + e.getMessage());
+            }
+
+         
+            st.executeUpdate("INSERT INTO conndemo VALUES('lmn', 2, 21)");
+            st.executeUpdate("INSERT INTO conndemo VALUES('abc', 3, 25)");
+            st.executeUpdate("INSERT INTO conndemo VALUES('xyz', 4, 22)");
+            st.executeUpdate("INSERT INTO conndemo VALUES('def', 5, 27)");
+            System.out.println("Data inserted successfully.");
+
+        
+            rs = st.executeQuery("SELECT * FROM conndemo");
+            System.out.println("Name\tRoll\tMarks");
+            while (rs.next()) {
+                System.out.println(rs.getString("name") + "\t" + rs.getInt("roll") + "\t" + rs.getInt("marks"));
+            }
+
+     
+            int rowsUpdated = st.executeUpdate("UPDATE conndemo SET name='tina' WHERE roll=3");
+            System.out.println("Rows updated: " + rowsUpdated);
+
+           
+
+        } catch (Exception ex) {
+            System.out.println("Error: " + ex.getMessage());
+            ex.printStackTrace();
+        } finally {
+  
+            try {
+                if (rs != null) rs.close();
+                if (st != null) st.close();
+                if (con != null) con.close();
+                System.out.println("Connection closed.");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
