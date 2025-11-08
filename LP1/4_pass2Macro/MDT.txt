@@ -1,4 +1,10 @@
-1:LOAD &ARG
-2:ADD #1
-3:STORE &ARG
-4:MEND
+Opcode	Rest
+---------------------------------
+0	MOVER #2,#0
+1	ADD #2,#1
+2	MOVEM #2,#0
+3	MEND
+4	MOVER #5,#3
+5	SUB #5,#4
+6	MOVEM #5,#3
+7	MEND
