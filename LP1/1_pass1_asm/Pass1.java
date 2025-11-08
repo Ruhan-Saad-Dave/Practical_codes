@@ -1,239 +1,153 @@
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.*;
+import java.util.*;
 
-/**
- * Implements Pass 1 of a simple two-pass assembler for a SIC-like machine.
- * This pass reads an assembly source file, builds a symbol table (SYMTAB),
- * a literal table (LITTAB), a pool table (POOLTAB), and generates an
- * intermediate file for Pass 2.
- */
 public class Pass1 {
+    private static int lc = 0;
+    private static Map<String, Integer> symtab = new LinkedHashMap<>();
+    private static Map<String, Integer> littab = new LinkedHashMap<>();
+    private static List<Integer> pooltab = new ArrayList<>(Arrays.asList(0));
+    private static Map<String, OpcodeEntry> mot = new HashMap<>();
 
-    // --- Data Structures ---
-    private static final Map<String, Integer> symtab = new LinkedHashMap<>();
-    private static final Map<String, String> optab = new HashMap<>();
-    private static final Map<String, LiteralEntry> littab = new LinkedHashMap<>();
-    private static final List<Integer> pooltab = new ArrayList<>();
-
-    private static int locationCounter = 0;
-    private static int startingAddress = 0;
-
-    /**
-     * Represents an entry in the Literal Table (LITTAB).
-     */
-    static class LiteralEntry {
-        String literal;
-        String value;
-        int length;
-        int address = -1; // -1 indicates address is not yet assigned
-
-        LiteralEntry(String literal) {
-            this.literal = literal;
-            String content = literal.substring(3, literal.length() - 1); // Content inside quotes
-
-            if (literal.toUpperCase().startsWith("=C'")) {
-                this.length = content.length();
-                StringBuilder hexValue = new StringBuilder();
-                for (char c : content.toCharArray()) {
-                    hexValue.append(Integer.toHexString(c).toUpperCase());
-                }
-                this.value = hexValue.toString();
-            } else if (literal.toUpperCase().startsWith("=X'")) {
-                this.length = (content.length() + 1) / 2; // Each pair of hex digits is 1 byte
-                this.value = content;
-            }
-        }
-    }
-
-    /**
-     * Pre-populates the Opcode Table (OPTAB).
-     */
-    private static void initializeOptab() {
-        optab.put("ADD", "18");
-        optab.put("AND", "40");
-        optab.put("COMP", "28");
-        optab.put("DIV", "24");
-        optab.put("J", "3C");
-        optab.put("JEQ", "30");
-        optab.put("JGT", "34");
-        optab.put("JLT", "38");
-        optab.put("JSUB", "48");
-        optab.put("LDA", "00");
-        optab.put("LDCH", "50");
-        optab.put("LDL", "08");
-        optab.put("LDX", "04");
-        optab.put("MUL", "20");
-        optab.put("OR", "44");
-        optab.put("RD", "D8");
-        optab.put("RSUB", "4C");
-        optab.put("STA", "0C");
-        optab.put("STCH", "54");
-        optab.put("STL", "14");
-        optab.put("STX", "10");
-        optab.put("SUB", "1C");
-        optab.put("TD", "E0");
-        optab.put("TIX", "2C");
-        optab.put("WD", "DC");
-    }
-
-    public static void main(String[] args) {
-        initializeOptab();
-        try {
-            assemble("input.txt");
-            System.out.println("Pass 1 assembly complete. Check intermediate.txt, symtab.txt, littab.txt, and pooltab.txt.");
-        } catch (IOException e) {
-            System.err.println("Error during assembly process: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Performs the Pass 1 assembly process.
-     * @param inputFile The path to the assembly source code file.
-     * @throws IOException If there's an error reading or writing files.
-     */
-    public static void assemble(String inputFile) throws IOException {
-        try (BufferedReader reader = new BufferedReader(new FileReader(inputFile));
-             FileWriter intermediateWriter = new FileWriter("intermediate.txt");
-             FileWriter symtabWriter = new FileWriter("symtab.txt");
-             FileWriter littabWriter = new FileWriter("littab.txt");
-             FileWriter pooltabWriter = new FileWriter("pooltab.txt")) {
-
-            pooltab.add(0); // Initialize POOLTAB for the first literal pool at index 0
-            String line;
-            boolean firstLine = true;
-
-            while ((line = reader.readLine()) != null) {
-                line = line.trim();
-                if (line.isEmpty() || line.startsWith(".")) {
-                    continue;
-                }
-
-                // --- Parsing the line ---
-                String label = null, opcode = null, operand = null;
-                String[] tokens = line.split("\\s+", 3);
-                String firstToken = tokens[0];
-
-                // Check if the first token is an opcode or directive
-                boolean isFirstTokenOpcode = optab.containsKey(firstToken.replace("+", "").toUpperCase()) ||
-                   "WORD,RESW,RESB,BYTE,START,END,LTORG".contains(firstToken.toUpperCase());
-
-                if (isFirstTokenOpcode) {
-                    opcode = tokens[0];
-                    if (tokens.length > 1) operand = tokens[1];
-                } else {
-                    label = tokens[0];
-                    opcode = (tokens.length > 1) ? tokens[1] : null;
-                    if (tokens.length > 2) operand = tokens[2];
-                }
-
-                // --- Handle START directive ---
-                if (firstLine) {
-                    if ("START".equalsIgnoreCase(opcode)) {
-                        startingAddress = Integer.parseInt(operand, 16);
-                        locationCounter = startingAddress;
-                        intermediateWriter.write(String.format("%-8s %-8s %-8s %s\n", Integer.toHexString(locationCounter).toUpperCase(), label, opcode, operand));
-                    } else {
-                        locationCounter = 0;
-                    }
-                    firstLine = false;
-                    continue;
-                }
-
-                // --- Handle LTORG and END directives (process literal pool) ---
-                if ("LTORG".equalsIgnoreCase(opcode) || "END".equalsIgnoreCase(opcode)) {
-                    intermediateWriter.write(String.format("%-8s %-8s %-8s %s\n", "", label != null ? label : "", opcode, operand != null ? operand : ""));
-                    processLiteralPool(intermediateWriter);
-                    if ("END".equalsIgnoreCase(opcode)) break;
-                    continue;
-                }
-
-                // --- Write current line to intermediate file before updating LC ---
-                intermediateWriter.write(String.format("%-8s %-8s %-8s %s\n", Integer.toHexString(locationCounter).toUpperCase(), label != null ? label : "", opcode, operand != null ? operand : ""));
-
-                // --- SYMTAB processing ---
-                if (label != null && !label.isEmpty()) {
-                    if (symtab.containsKey(label)) {
-                        System.err.println("ERROR: Duplicate symbol found -> " + label);
-                    } else {
-                        symtab.put(label, locationCounter);
-                    }
-                }
-                
-                // --- LITTAB processing ---
-                if (operand != null && operand.startsWith("=")) {
-                    if (!littab.containsKey(operand)) {
-                        littab.put(operand, new LiteralEntry(operand));
-                    }
-                }
-
-                // --- Location Counter processing ---
-                boolean isFormat4 = opcode != null && opcode.startsWith("+");
-                String cleanOpcode = isFormat4 ? opcode.substring(1) : opcode;
-
-                if (optab.containsKey(cleanOpcode.toUpperCase())) {
-                    locationCounter += isFormat4 ? 4 : 3;
-                } else if ("WORD".equalsIgnoreCase(opcode)) {
-                    locationCounter += 3;
-                } else if ("RESW".equalsIgnoreCase(opcode)) {
-                    locationCounter += 3 * Integer.parseInt(operand);
-                } else if ("RESB".equalsIgnoreCase(opcode)) {
-                    locationCounter += Integer.parseInt(operand);
-                } else if ("BYTE".equalsIgnoreCase(opcode)) {
-                    if (operand.toUpperCase().startsWith("C'")) {
-                        locationCounter += operand.length() - 3;
-                    } else if (operand.toUpperCase().startsWith("X'")) {
-                        locationCounter += (operand.length() - 3) / 2;
-                    }
-                } else {
-                     System.err.println("ERROR: Invalid opcode found -> " + opcode);
-                }
-            }
-
-            // --- Write out the generated tables ---
-            for (Map.Entry<String, Integer> entry : symtab.entrySet()) {
-                symtabWriter.write(String.format("%-10s %s\n", entry.getKey(), Integer.toHexString(entry.getValue()).toUpperCase()));
-            }
-            for (Map.Entry<String, LiteralEntry> entry : littab.entrySet()) {
-                LiteralEntry lit = entry.getValue();
-                littabWriter.write(String.format("%-8s %-8s %-4d %s\n", lit.literal, lit.value, lit.length, Integer.toHexString(lit.address).toUpperCase()));
-            }
-            for (int i = 0; i < pooltab.size() - 1; i++) {
-                pooltabWriter.write(String.format("#%d\n", pooltab.get(i)));
-            }
-        }
-    }
-
-    /**
-     * Processes the current literal pool by assigning addresses to all literals
-     * collected since the last pool was processed.
-     * @param writer The FileWriter for the intermediate file.
-     * @throws IOException If there's an error writing to the file.
-     */
-    private static void processLiteralPool(FileWriter writer) throws IOException {
-        int poolStartIndex = pooltab.get(pooltab.size() - 1);
+    static class OpcodeEntry { 
+        String t, c; 
+        int l; 
         
-        // Convert LITTAB map values to a list to access by index
-        List<LiteralEntry> literalList = new ArrayList<>(littab.values());
+        OpcodeEntry(String t, String c, int l) { 
+            this.t = t; 
+            this.c = c; 
+            this.l = l; 
+        } 
+    }
 
-        for (int i = poolStartIndex; i < literalList.size(); i++) {
-            LiteralEntry entry = literalList.get(i);
-            if (entry.address == -1) { // If address is not yet assigned
-                entry.address = locationCounter;
-                writer.write(String.format("%-8s %-8s %-8s\n",
-                    Integer.toHexString(locationCounter).toUpperCase(), "*", entry.literal));
-                locationCounter += entry.length;
-            }
+    static class AssemblyLine { 
+        String l, o, o1, o2; 
+        
+        AssemblyLine(String l, String o, String o1, String o2) { 
+            this.l = l; 
+            this.o = o; 
+            this.o1 = o1; 
+            this.o2 = o2; 
+        } 
+    }
+
+    static {
+        mot.put("STOP", new OpcodeEntry("IS", "00", 1)); 
+        mot.put("ADD", new OpcodeEntry("IS", "01", 1)); 
+        mot.put("SUB", new OpcodeEntry("IS", "02", 1));
+        mot.put("MOVER", new OpcodeEntry("IS", "04", 1)); 
+        mot.put("MOVEM", new OpcodeEntry("IS", "05", 1)); 
+        mot.put("DIV", new OpcodeEntry("IS", "08", 1));
+        mot.put("READ", new OpcodeEntry("IS", "09", 1)); 
+        mot.put("PRINT", new OpcodeEntry("IS", "10", 1)); 
+        mot.put("START", new OpcodeEntry("AD", "00", 0));
+        mot.put("END", new OpcodeEntry("AD", "01", 0)); 
+        mot.put("LTORG", new OpcodeEntry("AD", "04", 0)); 
+        mot.put("DS", new OpcodeEntry("DL", "01", 0));
+    }
+
+    public static void main(String[] args) throws IOException {
+        assemble("input.txt"); 
+        System.out.println("Pass 1 complete. Check generated files.");
+    }
+
+    private static int getSymbolIndex(String s) { 
+        if (!symtab.containsKey(s)) 
+            symtab.put(s, -1); 
+        return new ArrayList<>(symtab.keySet()).indexOf(s); 
+    }
+
+    private static int getLiteralIndex(String l) { 
+        if (!littab.containsKey(l)) 
+            littab.put(l, -1); 
+        return new ArrayList<>(littab.keySet()).indexOf(l); 
+    }
+    
+    private static AssemblyLine parseLine(String line) {
+        line = line.trim(); 
+        if (line.isEmpty()) 
+            return null;
+            
+        String[] tokens = line.split("\\s+");
+        String label = null, opcode = null, op1 = null, op2 = null, opsStr = null;
+        int opIdx = 0;
+        if (mot.containsKey(tokens[0].toUpperCase())) { opcode = tokens[0]; opIdx = 0; }
+        else {
+            label = tokens[0];
+            if (tokens.length > 1) { opcode = tokens[1]; opIdx = 1; }
+            else return new AssemblyLine(label, null, null, null);
         }
-        // Mark the start of the next literal pool
+        if (tokens.length > opIdx + 1) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = opIdx + 1; i < tokens.length; i++) sb.append(tokens[i]);
+            opsStr = sb.toString();
+        }
+        if (opsStr != null) {
+            String[] operands = opsStr.split(",", 2); 
+            op1 = operands[0].trim(); 
+            if (operands.length > 1) op2 = operands[1].trim(); 
+        }
+        return new AssemblyLine(label, opcode, op1, op2);
+    }
+
+    private static void processLiteralPool(FileWriter iw) throws IOException {
+        int poolStart = pooltab.get(pooltab.size() - 1);
+        List<String> litNames = new ArrayList<>(littab.keySet());
+        for (int i = poolStart; i < litNames.size(); i++) {
+            littab.put(litNames.get(i), lc); lc++;
+        }
         pooltab.add(littab.size());
     }
-}
 
+    public static void assemble(String inFile) throws IOException {
+        try (BufferedReader r = new BufferedReader(new FileReader(inFile));
+             FileWriter iw = new FileWriter("intermediate_code.txt");
+             FileWriter sw = new FileWriter("symtab.txt");
+             FileWriter lw = new FileWriter("littab.txt");
+             FileWriter pw = new FileWriter("pooltab.txt")) {
+            String line;
+            while ((line = r.readLine()) != null) {
+                AssemblyLine al = parseLine(line);
+                if (al == null) continue;
+                if (al.l != null) {
+                    if (symtab.containsKey(al.l) && symtab.get(al.l) != -1) System.err.println("Dup sym: " + al.l);
+                    symtab.put(al.l, lc);
+                }
+                if (al.o == null) continue;
+                OpcodeEntry op = mot.get(al.o.toUpperCase());
+                if (op == null) { System.err.println("Bad op: " + al.o); continue; }
+
+                if (al.o.equalsIgnoreCase("START")) {
+                    lc = Integer.parseInt(al.o1);
+                    iw.write(String.format("(%s, %s) (C, %s)\n", op.t, op.c, al.o1));
+                } else if (al.o.equalsIgnoreCase("LTORG")) {
+                    iw.write(String.format("(%s, %s)\n", op.t, op.c));
+                    processLiteralPool(iw);
+                } else if (al.o.equalsIgnoreCase("END")) {
+                    iw.write(String.format("(%s, %s)\n", op.t, op.c));
+                    processLiteralPool(iw); break;
+                } else if (al.o.equalsIgnoreCase("DS")) {
+                    int size = Integer.parseInt(al.o1);
+                    iw.write(String.format("(%s, %s) (C, %d)\n", op.t, op.c, size));
+                    lc += size;
+                } else if (op.t.equals("IS")) {
+                    String rg = "", opd = "";
+                    if (al.o.equals("MOVER") || al.o.equals("MOVEM") || al.o.equals("ADD") || al.o.equals("SUB") || al.o.equals("DIV")) {
+                        rg = (al.o1 != null && al.o1.equalsIgnoreCase("BREG")) ? "(1)" : "(0)";
+                        if (al.o2 != null) opd = al.o2.startsWith("=") ? String.format("(L, %02d)", getLiteralIndex(al.o2)) : String.format("(S, %02d)", getSymbolIndex(al.o2));
+                    } else if (al.o.equals("READ") || al.o.equals("PRINT")) {
+                        if (al.o1 != null) opd = String.format("(S, %02d)", getSymbolIndex(al.o1));
+                    }
+                    iw.write(String.format("(%s, %s) %s %s\n", op.t, op.c, rg, opd).trim().replaceAll(" +", " ") + "\n");
+                    lc += op.l;
+                }
+            }
+            sw.write("Symb\tAddr\n");
+            for (Map.Entry<String, Integer> e : symtab.entrySet()) sw.write(String.format("%s\t%d\n", e.getKey(), e.getValue()));
+            lw.write("Lit#\tLit\tAddr\n");
+            List<String> litNames = new ArrayList<>(littab.keySet());
+            for (int i = 0; i < litNames.size(); i++) lw.write(String.format("%02d\t%s\t%d\n", i, litNames.get(i), littab.get(litNames.get(i))));
+            pw.write("Pool#\tPool Base\n");
+            for (int i = 0; i < pooltab.size() - 1; i++) pw.write(String.format("%02d\t%d\n", i, pooltab.get(i)));
+        }
+    }
+}
