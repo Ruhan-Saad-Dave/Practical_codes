@@ -1,136 +1,108 @@
-# bully.py
-# This program simulates the Bully Algorithm for leader election in a distributed system.
-
-import time
-import random
+# bully_compressed.py
+# This is a compressed simulation of the Bully Algorithm.
 
 class Process:
-    def __init__(self, process_id):
-        self.id = process_id
+    def __init__(self, pid):
+        self.id = pid
         self.is_active = True
-        self.is_coordinator = False
+        self.is_coord = False
 
 class BullyAlgorithm:
-    def __init__(self, num_processes):
-        self.num_processes = num_processes
-        # Initialize processes with unique IDs from 1 to num_processes
-        self.processes = [Process(i + 1) for i in range(num_processes)]
-        self.coordinator_id = num_processes  # Highest ID process starts as coordinator
-        self.processes[self.coordinator_id - 1].is_coordinator = True
-        print(f"System initialized with {num_processes} processes.")
-        print(f"Process {self.coordinator_id} is the initial coordinator.")
-        self.print_system_state()
+    def __init__(self, n_proc):
+        self.n_proc = n_proc
+        self.procs = [Process(i + 1) for i in range(n_proc)]
+        self.coord_id = n_proc
+        self.procs[self.coord_id - 1].is_coord = True
+        print(f"System initialized. P{self.coord_id} is coordinator.")
+        self.print_state()
 
-    def print_system_state(self):
+    def print_state(self):
         """Prints the current status of all processes."""
         print("--- System State ---")
-        for p in self.processes:
+        for p in self.procs:
             status = "Active" if p.is_active else "Inactive"
-            coord = "(Coordinator)" if p.is_coordinator else ""
-            print(f"  Process {p.id}: {status} {coord}")
+            coord = "(C)" if p.is_coord else ""
+            print(f"  P{p.id}: {status} {coord}")
         print("--------------------")
 
-    def bring_process_down(self, process_id):
-        """Simulates a process failing or going offline."""
-        if 1 <= process_id <= self.num_processes:
-            if not self.processes[process_id - 1].is_active:
-                print(f"\nProcess {process_id} is already down.")
-                return
-            self.processes[process_id - 1].is_active = False
-            print(f"\n>>> Process {process_id} has gone down. <<<")
-            if self.processes[process_id - 1].is_coordinator:
-                self.processes[process_id - 1].is_coordinator = False
-                print("The coordinator has crashed!")
-        else:
-            print(f"Invalid process ID: {process_id}")
+    def bring_down(self, pid):
+        """Simulates a process failing."""
+        if not 1 <= pid <= self.n_proc or not self.procs[pid - 1].is_active:
+            print(f"\nP{pid} is already down or invalid.")
+            return
+        self.procs[pid - 1].is_active = False
+        print(f"\n>>> P{pid} has gone down. <<<")
+        if self.procs[pid - 1].is_coord:
+            self.procs[pid - 1].is_coord = False
+            print("The coordinator has crashed!")
 
-    def hold_election(self, initiator_id):
-        """Simulates the election process initiated by a specific process."""
-        if not self.processes[initiator_id - 1].is_active:
-            print(f"Process {initiator_id} is down and cannot start an election.")
+    def hold_election(self, init_id):
+        """Simulates the election process initiated by a process."""
+        if not self.procs[init_id - 1].is_active:
+            print(f"P{init_id} is down, cannot start election.")
             return
 
-        print(f"\n--- Election Initiated by Process {initiator_id} ---")
-        time.sleep(1)
-
-        higher_processes_found = False
-        # The initiator sends an 'Election' message to all processes with a higher ID.
-        for i in range(initiator_id, self.num_processes):
-            if self.processes[i].is_active:
-                print(f"Process {initiator_id} sends Election message to Process {i + 1}.")
-                time.sleep(0.5)
-                # If a higher-ID process is active, it responds with 'OK'.
-                print(f"Process {i + 1} responds with OK to Process {initiator_id}.")
-                higher_processes_found = True
-
-        if not higher_processes_found:
-            # If no higher-ID process responds, the initiator becomes the new coordinator.
-            print(f"Process {initiator_id} received no OK from higher processes.")
-            print(f"Process {initiator_id} declares itself the new coordinator!")
-            self.set_new_coordinator(initiator_id)
-            return
-
-        print(f"Process {initiator_id} will not become the coordinator and waits for a Victory message.")
-        time.sleep(1)
-
-        # Now, the higher processes that received an Election message will start their own elections.
-        # This demonstrates the "bullying" aspect.
-        for i in range(initiator_id, self.num_processes):
-            if self.processes[i].is_active:
-                self.hold_election(i + 1)
-                # Once a higher process starts an election, we can stop this loop.
-                return
-
-
-    def set_new_coordinator(self, new_coordinator_id):
-        """Sets the new coordinator and sends a 'Victory' message to all."""
-        # Reset previous coordinator
-        if self.coordinator_id and self.processes[self.coordinator_id - 1]:
-             self.processes[self.coordinator_id - 1].is_coordinator = False
-             
-        self.coordinator_id = new_coordinator_id
-        self.processes[new_coordinator_id - 1].is_coordinator = True
-        print(f"\n>>> Announcing New Coordinator: Process {new_coordinator_id} <<<")
+        print(f"\n--- P{init_id} starts election ---")
         
-        # The new coordinator sends a 'Victory' (or 'Coordinator') message to all other active processes.
-        for p in self.processes:
-            if p.is_active and p.id != new_coordinator_id:
-                print(f"Process {new_coordinator_id} sends Victory message to Process {p.id}.")
-                time.sleep(0.3)
-        self.print_system_state()
-
-
-def simulate_bully():
-    print("======== Bully Algorithm Simulation ========")
-    try:
-        num_p = int(input("Enter the total number of processes: "))
-        if num_p < 2:
-            print("At least 2 processes are needed.")
+        # Check if any higher-ID process is active
+        higher_procs_active = False
+        for i in range(init_id, self.n_proc):
+            if self.procs[i].is_active:
+                print(f"P{init_id} sends Election to P{i + 1}. (P{i+1} responds OK)")
+                higher_procs_active = True
+        
+        if not higher_procs_active:
+            # No higher-ID process is active, this initiator wins
+            print(f"P{init_id} finds no higher active process.")
+            self.set_new_coordinator(init_id)
             return
-    except ValueError:
-        print("Invalid input. Please enter an integer.")
-        return
 
-    simulation = BullyAlgorithm(num_p)
-    
-    # --- Simulation Scenario ---
-    time.sleep(2)
-    
-    # 1. The coordinator (highest ID) crashes.
-    simulation.bring_process_down(num_p)
-    simulation.print_system_state()
-    time.sleep(2)
+        # If higher processes were found, they take over
+        # The first active higher-ID process will start its own election
+        for i in range(init_id, self.n_proc):
+            if self.procs[i].is_active:
+                print(f"P{init_id} backs down.")
+                self.hold_election(i + 1) # "Bully" aspect
+                return # This initiator's election process is over
 
-    # 2. A random active process detects the failure and starts an election.
-    while True:
-        random_process_id = random.randint(1, num_p -1)
-        if simulation.processes[random_process_id-1].is_active:
-            break
-
-    print(f"\nProcess {random_process_id} detects coordinator failure and starts an election.")
-    simulation.hold_election(random_process_id)
-    
-    print("\n======== Simulation Complete ========")
+    def set_new_coordinator(self, new_cid):
+        """Sets the new coordinator and announces it."""
+        if self.coord_id:
+            self.procs[self.coord_id - 1].is_coord = False
+            
+        self.coord_id = new_cid
+        self.procs[new_cid - 1].is_coord = True
+        print(f"\n>>> P{new_cid} is the new coordinator! <<<")
+        
+        # Announce victory to all other active processes
+        for p in self.procs:
+            if p.is_active and p.id != new_cid:
+                print(f"P{new_cid} sends Victory to P{p.id}.")
+        self.print_state()
 
 if __name__ == "__main__":
-    simulate_bully()
+    print("======== Bully Algorithm Simulation ========")
+    try:
+        n = int(input("Enter the total number of processes: "))
+        if n < 2:
+            print("At least 2 processes are needed."); exit()
+    except ValueError:
+        print("Invalid input."); exit()
+
+    sim = BullyAlgorithm(n)
+    
+    # --- Simulation Scenario ---
+    # 1. The coordinator (highest ID) crashes.
+    sim.bring_down(n)
+    sim.print_state()
+
+    # 2. Process 1 detects the failure and starts an election.
+    # (Using a fixed initiator instead of random)
+    initiator = 1
+    if not sim.procs[initiator-1].is_active:
+        print(f"P{initiator} is down, cannot start election.")
+    else:
+        print(f"\nP{initiator} detects coordinator failure.")
+        sim.hold_election(initiator)
+    
+    print("\n======== Simulation Complete ========")
