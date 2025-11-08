@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Scanner;
 
 class Process {
-    int pid, at, bt, prio, rbt, ft, wt, tat;
+    int pid, at, bt, prio, rbt, ft, wt, tat; //processId, ArrivalTime, BurstTime, Priority, RemainingBurstTime, FinishTime, WaitingTime, TurnAroundTime
     public Process(int pid, int at, int bt, int pri) {
         this.pid = pid; this.at = at; this.bt = bt; this.prio = pri; this.rbt = bt;
     }
@@ -22,9 +22,12 @@ public class CPUSchedule {
         int n = sc.nextInt();
         for (int i = 0; i < n; i++) {
             System.out.println("\n--- Process " + (i + 1) + " ---");
-            System.out.print("Enter Arrival Time: "); int at = sc.nextInt();
-            System.out.print("Enter Burst Time: "); int bt = sc.nextInt();
-            System.out.print("Enter Priority: "); int pri = sc.nextInt();
+            System.out.print("Enter Arrival Time: "); 
+            int at = sc.nextInt();
+            System.out.print("Enter Burst Time: "); 
+            int bt = sc.nextInt();
+            System.out.print("Enter Priority: "); 
+            int pri = sc.nextInt();
             pList.add(new Process(i + 1, at, bt, pri));
         }
         runFCFS(new ArrayList<>(pList));
@@ -37,7 +40,8 @@ public class CPUSchedule {
         Collections.sort(pList, Comparator.comparingInt(p -> p.at));
         int ct = 0;
         for (Process p : pList) {
-            if (ct < p.at) ct = p.at;
+            if (ct < p.at) 
+                ct = p.at;
             p.ft = ct + p.bt;
             p.tat = p.ft - p.at;
             p.wt = p.tat - p.bt;
@@ -90,7 +94,9 @@ public class CPUSchedule {
     }
 
     public static void printResults(List<Process> pList, String name) {
-        double totWT = 0, totTAT = 0; int n = pList.size();
+        double totWT = 0, totTAT = 0; 
+        int n = pList.size();
+
         System.out.println("\n\n--- Results for: " + name + " ---");
         System.out.println("-----------------------------------------------------------------------------------------");
         System.out.println("  PID\t\tAT\t\tBT\t\tPriority\tFT\t\tWT\t\tTAT");
@@ -98,7 +104,8 @@ public class CPUSchedule {
         Collections.sort(pList, Comparator.comparingInt(p -> p.pid));
         for (Process p : pList) {
             System.out.println(p.toString());
-            totWT += p.wt; totTAT += p.tat;
+            totWT += p.wt; 
+            totTAT += p.tat;
         }
         System.out.println("-----------------------------------------------------------------------------------------");
         System.out.printf("Average Waiting Time: %.2f\n", (totWT / n));

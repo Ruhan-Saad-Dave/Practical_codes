@@ -6,7 +6,7 @@ public class Pass1 {
     private static Map<String, Integer> symtab = new LinkedHashMap<>();
     private static Map<String, Integer> littab = new LinkedHashMap<>();
     private static List<Integer> pooltab = new ArrayList<>(Arrays.asList(0));
-    private static Map<String, OpcodeEntry> mot = new HashMap<>();
+    private static Map<String, OpcodeEntry> mot = new HashMap<>(); //Machine Opcode Table
 
     static class OpcodeEntry { 
         String type, code; 
@@ -31,18 +31,24 @@ public class Pass1 {
     }
 
     static {
-        mot.put("STOP", new OpcodeEntry("IS", "00", 1)); 
+        mot.put("STOP", new OpcodeEntry("IS", "00", 1)); //Imperative statement
         mot.put("ADD", new OpcodeEntry("IS", "01", 1)); 
         mot.put("SUB", new OpcodeEntry("IS", "02", 1));
+        mot.put("MULT", new OpcodeEntry("IS", "03", 1));
         mot.put("MOVER", new OpcodeEntry("IS", "04", 1)); 
         mot.put("MOVEM", new OpcodeEntry("IS", "05", 1)); 
+        mot.put("COMP", new OpcodeEntry("IS", "06", 1));
+        mot.put("BC", new OpcodeEntry("IS", "07", 1));
         mot.put("DIV", new OpcodeEntry("IS", "08", 1));
         mot.put("READ", new OpcodeEntry("IS", "09", 1)); 
         mot.put("PRINT", new OpcodeEntry("IS", "10", 1)); 
-        mot.put("START", new OpcodeEntry("AD", "00", 0));
+        mot.put("START", new OpcodeEntry("AD", "00", 0)); //Assembler Directive
         mot.put("END", new OpcodeEntry("AD", "01", 0)); 
+        mot.put("ORIGIN", new OpcodeEntry("AD", "02", 0));
+        mot.put("EQU", new OpcodeEntry("AD", "03", 0));
         mot.put("LTORG", new OpcodeEntry("AD", "04", 0)); 
-        mot.put("DS", new OpcodeEntry("DL", "01", 0));
+        mot.put("DS", new OpcodeEntry("DL", "01", 0)); // Declaration language
+        mot.put("DC", new OpcodeEntry("DL", "02", 0));
     }
 
     public static void main(String[] args) throws IOException {
@@ -67,22 +73,27 @@ public class Pass1 {
         if (line.isEmpty()) 
             return null;
             
-        String[] tokens = line.split("\\s+");
+        String[] tokens = line.split("\\s+"); //split at space
         String label = null, opcode = null, op1 = null, op2 = null, opsStr = null;
         int opIdx = 0;
-        if (mot.containsKey(tokens[0].toUpperCase())) { opcode = tokens[0]; opIdx = 0; }
+        if (mot.containsKey(tokens[0].toUpperCase())) { 
+            opcode = tokens[0]; 
+            opIdx = 0; 
+        }
         else {
             label = tokens[0];
             if (tokens.length > 1) { opcode = tokens[1]; opIdx = 1; }
             else return new AssemblyLine(label, null, null, null);
         }
+
         if (tokens.length > opIdx + 1) {
             StringBuilder sb = new StringBuilder();
-            for (int i = opIdx + 1; i < tokens.length; i++) sb.append(tokens[i]);
+            for (int i = opIdx + 1; i < tokens.length; i++) 
+                sb.append(tokens[i]);
             opsStr = sb.toString();
         }
         if (opsStr != null) {
-            String[] operands = opsStr.split(",", 2); 
+            String[] operands = opsStr.split(",", 2); // split into 2 parts
             op1 = operands[0].trim(); 
             if (operands.length > 1) op2 = operands[1].trim(); 
         }
@@ -93,7 +104,8 @@ public class Pass1 {
         int poolStart = pooltab.get(pooltab.size() - 1);
         List<String> litNames = new ArrayList<>(littab.keySet());
         for (int i = poolStart; i < litNames.size(); i++) {
-            littab.put(litNames.get(i), lc); lc++;
+            littab.put(litNames.get(i), lc); 
+            lc++;
         }
         pooltab.add(littab.size());
     }
@@ -111,13 +123,13 @@ public class Pass1 {
                     continue;
                 if (assemblyline.label != null) {
                     if (symtab.containsKey(assemblyline.label) && symtab.get(assemblyline.label) != -1) 
-                        System.err.println("Dup sym: " + assemblyline.label);
+                        System.err.println("Dup symbol: " + assemblyline.label);
                     symtab.put(assemblyline.label, lc);
                 }
                 if (assemblyline.opcode == null) continue;
                 OpcodeEntry op = mot.get(assemblyline.opcode.toUpperCase());
                 if (op == null) { 
-                    System.err.println("Bad op: " + assemblyline.opcode); 
+                    System.err.println("Bad opcode: " + assemblyline.opcode); 
                     continue; 
                 }
 
@@ -129,7 +141,8 @@ public class Pass1 {
                     processLiteralPool(interwriter);
                 } else if (assemblyline.opcode.equalsIgnoreCase("END")) {
                     interwriter.write(String.format("(%s, %s)\n", op.type, op.code));
-                    processLiteralPool(interwriter); break;
+                    processLiteralPool(interwriter); 
+                    break;
                 } else if (assemblyline.opcode.equalsIgnoreCase("DS")) {
                     int size = Integer.parseInt(assemblyline.operand1);
                     interwriter.write(String.format("(%s, %s) (C, %d)\n", op.type, op.code, size));
