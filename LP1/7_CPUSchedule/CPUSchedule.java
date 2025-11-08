@@ -1,202 +1,107 @@
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Scanner;
 
-// Base class for a Process
 class Process {
-    String pid;
-    int arrivalTime, burstTime, remainingTime, priority;
-    int waitingTime, turnaroundTime, completionTime;
-
-    Process(String pid, int arrivalTime, int burstTime, int priority) {
-        this.pid = pid;
-        this.arrivalTime = arrivalTime;
-        this.burstTime = burstTime;
-        this.remainingTime = burstTime;
-        this.priority = priority;
+    int pid, at, bt, prio, rbt, ft, wt, tat;
+    public Process(int pid, int at, int bt, int pri) {
+        this.pid = pid; this.at = at; this.bt = bt; this.prio = pri; this.rbt = bt;
+    }
+    public String toString() {
+        return String.format("   %d\t\t%d\t\t%d\t\t%d\t\t%d\t\t%d\t\t%d", pid, at, bt, prio, ft, wt, tat);
     }
 }
 
-// Abstract base class for all Scheduling Algorithms
-abstract class Scheduler {
-    List<Process> processes = new ArrayList<>();
-
-    Scheduler(List<Process> processes) {
-        this.processes = processes;
-    }
-
-    abstract void execute();
-    abstract String getName();
-
-    // Display result in tabular format
-    void displayResults() {
-        System.out.println("\n--- " + getName() + " Scheduling ---");
-        System.out.println("PID\tAT\tBT\tPR\tCT\tTAT\tWT");
-        for (Process p : processes) {
-            System.out.println(p.pid + "\t" + p.arrivalTime + "\t" + p.burstTime + "\t" + p.priority +
-                    "\t" + p.completionTime + "\t" + p.turnaroundTime + "\t" + p.waitingTime);
-        }
-
-        double avgTAT = processes.stream().mapToDouble(p -> p.turnaroundTime).average().orElse(0);
-        double avgWT = processes.stream().mapToDouble(p -> p.waitingTime).average().orElse(0);
-        System.out.printf("Average Turnaround Time: %.2f\n", avgTAT);
-        System.out.printf("Average Waiting Time: %.2f\n", avgWT);
-    }
-}
-
-// FCFS Scheduling
-class FCFS extends Scheduler {
-    FCFS(List<Process> processes) {
-        super(processes);
-    }
-
-    @Override
-    void execute() {
-        processes.sort(Comparator.comparingInt(p -> p.arrivalTime));
-
-        int currentTime = 0;
-        for (Process p : processes) {
-            currentTime = Math.max(currentTime, p.arrivalTime);
-            currentTime += p.burstTime;
-            p.completionTime = currentTime;
-            p.turnaroundTime = p.completionTime - p.arrivalTime;
-            p.waitingTime = p.turnaroundTime - p.burstTime;
-        }
-    }
-
-    @Override
-    String getName() {
-        return "FCFS";
-    }
-}
-
-// SJF (Preemptive) Scheduling
-class SJFPreemptive extends Scheduler {
-    SJFPreemptive(List<Process> processes) {
-        super(processes);
-    }
-
-    @Override
-    void execute() {
-        int time = 0, completed = 0;
-
-        while (completed < processes.size()) {
-            Process shortest = null;
-            for (Process p : processes) {
-                if (p.arrivalTime <= time && p.remainingTime > 0) {
-                    if (shortest == null || p.remainingTime < shortest.remainingTime)
-                        shortest = p;
-                }
-            }
-
-            if (shortest == null) {
-                time++;
-                continue;
-            }
-
-            shortest.remainingTime--;
-            time++;
-
-            if (shortest.remainingTime == 0) {
-                completed++;
-                shortest.completionTime = time;
-                shortest.turnaroundTime = shortest.completionTime - shortest.arrivalTime;
-                shortest.waitingTime = shortest.turnaroundTime - shortest.burstTime;
-            }
-        }
-    }
-
-    @Override
-    String getName() {
-        return "SJF (Preemptive)";
-    }
-}
-
-// Priority (Non-Preemptive) Scheduling
-class PriorityNonPreemptive extends Scheduler {
-    PriorityNonPreemptive(List<Process> processes) {
-        super(processes);
-    }
-
-    @Override
-    void execute() {
-        List<Process> readyQueue = new ArrayList<>();
-        List<Process> remaining = new ArrayList<>(processes);
-        int time = 0;
-        int completed = 0;
-
-        while(completed < processes.size()){
-            // Add arrived processes to the ready queue
-            Iterator<Process> it = remaining.iterator();
-            while(it.hasNext()){
-                Process p = it.next();
-                if(p.arrivalTime <= time){
-                    readyQueue.add(p);
-                    it.remove();
-                }
-            }
-
-            if(readyQueue.isEmpty()){
-                time++;
-                continue;
-            }
-
-            // Sort by priority (lower number is higher priority)
-            readyQueue.sort(Comparator.comparingInt(p -> p.priority));
-            Process current = readyQueue.remove(0);
-
-            time += current.burstTime;
-            current.completionTime = time;
-            current.turnaroundTime = current.completionTime - current.arrivalTime;
-            current.waitingTime = current.turnaroundTime - current.burstTime;
-            completed++;
-        }
-    }
-
-    @Override
-    String getName() {
-        return "Priority (Non-Preemptive)";
-    }
-}
-
-// Main class
 public class CPUSchedule {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+        List<Process> pList = new ArrayList<>();
         System.out.print("Enter number of processes: ");
         int n = sc.nextInt();
-
-        List<Process> processList = new ArrayList<>();
         for (int i = 0; i < n; i++) {
-            System.out.println("Enter details for Process " + (i + 1) + " (AT BT Priority): ");
-            int at = sc.nextInt();
-            int bt = sc.nextInt();
-            int pr = sc.nextInt();
-            processList.add(new Process("P" + (i + 1), at, bt, pr));
+            System.out.println("\n--- Process " + (i + 1) + " ---");
+            System.out.print("Enter Arrival Time: "); int at = sc.nextInt();
+            System.out.print("Enter Burst Time: "); int bt = sc.nextInt();
+            System.out.print("Enter Priority: "); int pri = sc.nextInt();
+            pList.add(new Process(i + 1, at, bt, pri));
         }
+        runFCFS(new ArrayList<>(pList));
+        runSJFPreemptive(new ArrayList<>(pList));
+        runPriorityNonPreemptive(new ArrayList<>(pList));
         sc.close();
-
-        // Create copies for each algorithm
-        List<Process> fcfsList = deepCopy(processList);
-        List<Process> sjfList = deepCopy(processList);
-        List<Process> priorityList = deepCopy(processList);
-
-        Scheduler fcfs = new FCFS(fcfsList);
-        fcfs.execute();
-        fcfs.displayResults();
-
-        Scheduler sjf = new SJFPreemptive(sjfList);
-        sjf.execute();
-        sjf.displayResults();
-
-        Scheduler priority = new PriorityNonPreemptive(priorityList);
-        priority.execute();
-        priority.displayResults();
     }
 
-    // Helper to deep copy process list
-    static List<Process> deepCopy(List<Process> list) {
-        List<Process> copy = new ArrayList<>();
-        for (Process p : list)
-            copy.add(new Process(p.pid, p.arrivalTime, p.burstTime, p.priority));
-        return copy;
+    public static void runFCFS(List<Process> pList) {
+        Collections.sort(pList, Comparator.comparingInt(p -> p.at));
+        int ct = 0;
+        for (Process p : pList) {
+            if (ct < p.at) ct = p.at;
+            p.ft = ct + p.bt;
+            p.tat = p.ft - p.at;
+            p.wt = p.tat - p.bt;
+            ct = p.ft;
+        }
+        printResults(pList, "First-Come, First-Served (FCFS)");
+    }
+
+    public static void runSJFPreemptive(List<Process> pList) {
+        int ct = 0, comp = 0, n = pList.size();
+        while (comp < n) {
+            Process sp = null; int minRem = Integer.MAX_VALUE;
+            for (Process p : pList) {
+                if (p.at <= ct && p.rbt > 0 && p.rbt < minRem) {
+                    minRem = p.rbt; sp = p;
+                }
+            }
+            if (sp == null) { ct++; } else {
+                sp.rbt--; ct++;
+                if (sp.rbt == 0) {
+                    sp.ft = ct;
+                    sp.tat = sp.ft - sp.at;
+                    sp.wt = sp.tat - sp.bt;
+                    comp++;
+                }
+            }
+        }
+        printResults(pList, "Shortest-Job-First (SJF) - Preemptive");
+    }
+
+    public static void runPriorityNonPreemptive(List<Process> pList) {
+        int ct = 0, comp = 0, n = pList.size();
+        while (comp < n) {
+            Process hp = null; int maxPri = Integer.MAX_VALUE;
+            for (Process p : pList) {
+                if (p.at <= ct && p.rbt > 0 && p.prio < maxPri) {
+                    maxPri = p.prio; hp = p;
+                }
+            }
+            if (hp == null) { ct++; } else {
+                ct += hp.bt;
+                hp.ft = ct;
+                hp.tat = hp.ft - hp.at;
+                hp.wt = hp.tat - hp.bt;
+                hp.rbt = 0;
+                comp++;
+            }
+        }
+        printResults(pList, "Priority (Non-Preemptive)");
+    }
+
+    public static void printResults(List<Process> pList, String name) {
+        double totWT = 0, totTAT = 0; int n = pList.size();
+        System.out.println("\n\n--- Results for: " + name + " ---");
+        System.out.println("-----------------------------------------------------------------------------------------");
+        System.out.println("  PID\t\tAT\t\tBT\t\tPriority\tFT\t\tWT\t\tTAT");
+        System.out.println("-----------------------------------------------------------------------------------------");
+        Collections.sort(pList, Comparator.comparingInt(p -> p.pid));
+        for (Process p : pList) {
+            System.out.println(p.toString());
+            totWT += p.wt; totTAT += p.tat;
+        }
+        System.out.println("-----------------------------------------------------------------------------------------");
+        System.out.printf("Average Waiting Time: %.2f\n", (totWT / n));
+        System.out.printf("Average Turnaround Time: %.2f\n", (totTAT / n));
     }
 }
