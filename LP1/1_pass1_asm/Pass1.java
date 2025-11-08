@@ -9,24 +9,24 @@ public class Pass1 {
     private static Map<String, OpcodeEntry> mot = new HashMap<>();
 
     static class OpcodeEntry { 
-        String t, c; 
-        int l; 
+        String type, code; 
+        int length; 
         
-        OpcodeEntry(String t, String c, int l) { 
-            this.t = t; 
-            this.c = c; 
-            this.l = l; 
+        OpcodeEntry(String type, String code, int length) { 
+            this.type = type; 
+            this.code = code; 
+            this.length = length; 
         } 
     }
 
     static class AssemblyLine { 
-        String l, o, o1, o2; 
+        String label, opcode, operand1, operand2; 
         
-        AssemblyLine(String l, String o, String o1, String o2) { 
-            this.l = l; 
-            this.o = o; 
-            this.o1 = o1; 
-            this.o2 = o2; 
+        AssemblyLine(String label, String opcode, String operand1, String operand2) { 
+            this.label = label; 
+            this.opcode = opcode; 
+            this.operand1 = operand1; 
+            this.operand2 = operand2; 
         } 
     }
 
@@ -99,55 +99,65 @@ public class Pass1 {
     }
 
     public static void assemble(String inFile) throws IOException {
-        try (BufferedReader r = new BufferedReader(new FileReader(inFile));
-             FileWriter iw = new FileWriter("intermediate_code.txt");
-             FileWriter sw = new FileWriter("symtab.txt");
-             FileWriter lw = new FileWriter("littab.txt");
-             FileWriter pw = new FileWriter("pooltab.txt")) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(inFile));
+             FileWriter interwriter = new FileWriter("intermediate_code.txt");
+             FileWriter symwriter = new FileWriter("symtab.txt");
+             FileWriter litwriter = new FileWriter("littab.txt");
+             FileWriter poolwriter = new FileWriter("pooltab.txt")) {
             String line;
-            while ((line = r.readLine()) != null) {
-                AssemblyLine al = parseLine(line);
-                if (al == null) continue;
-                if (al.l != null) {
-                    if (symtab.containsKey(al.l) && symtab.get(al.l) != -1) System.err.println("Dup sym: " + al.l);
-                    symtab.put(al.l, lc);
+            while ((line = reader.readLine()) != null) {
+                AssemblyLine assemblyline = parseLine(line);
+                if (assemblyline == null) 
+                    continue;
+                if (assemblyline.label != null) {
+                    if (symtab.containsKey(assemblyline.label) && symtab.get(assemblyline.label) != -1) 
+                        System.err.println("Dup sym: " + assemblyline.label);
+                    symtab.put(assemblyline.label, lc);
                 }
-                if (al.o == null) continue;
-                OpcodeEntry op = mot.get(al.o.toUpperCase());
-                if (op == null) { System.err.println("Bad op: " + al.o); continue; }
+                if (assemblyline.opcode == null) continue;
+                OpcodeEntry op = mot.get(assemblyline.opcode.toUpperCase());
+                if (op == null) { 
+                    System.err.println("Bad op: " + assemblyline.opcode); 
+                    continue; 
+                }
 
-                if (al.o.equalsIgnoreCase("START")) {
-                    lc = Integer.parseInt(al.o1);
-                    iw.write(String.format("(%s, %s) (C, %s)\n", op.t, op.c, al.o1));
-                } else if (al.o.equalsIgnoreCase("LTORG")) {
-                    iw.write(String.format("(%s, %s)\n", op.t, op.c));
-                    processLiteralPool(iw);
-                } else if (al.o.equalsIgnoreCase("END")) {
-                    iw.write(String.format("(%s, %s)\n", op.t, op.c));
-                    processLiteralPool(iw); break;
-                } else if (al.o.equalsIgnoreCase("DS")) {
-                    int size = Integer.parseInt(al.o1);
-                    iw.write(String.format("(%s, %s) (C, %d)\n", op.t, op.c, size));
+                if (assemblyline.opcode.equalsIgnoreCase("START")) {
+                    lc = Integer.parseInt(assemblyline.operand1);
+                    interwriter.write(String.format("(%s, %s) (C, %s)\n", op.type, op.code, assemblyline.operand1));
+                } else if (assemblyline.opcode.equalsIgnoreCase("LTORG")) {
+                    interwriter.write(String.format("(%s, %s)\n", op.type, op.code));
+                    processLiteralPool(interwriter);
+                } else if (assemblyline.opcode.equalsIgnoreCase("END")) {
+                    interwriter.write(String.format("(%s, %s)\n", op.type, op.code));
+                    processLiteralPool(interwriter); break;
+                } else if (assemblyline.opcode.equalsIgnoreCase("DS")) {
+                    int size = Integer.parseInt(assemblyline.operand1);
+                    interwriter.write(String.format("(%s, %s) (C, %d)\n", op.type, op.code, size));
                     lc += size;
-                } else if (op.t.equals("IS")) {
+                } else if (op.type.equals("IS")) {
                     String rg = "", opd = "";
-                    if (al.o.equals("MOVER") || al.o.equals("MOVEM") || al.o.equals("ADD") || al.o.equals("SUB") || al.o.equals("DIV")) {
-                        rg = (al.o1 != null && al.o1.equalsIgnoreCase("BREG")) ? "(1)" : "(0)";
-                        if (al.o2 != null) opd = al.o2.startsWith("=") ? String.format("(L, %02d)", getLiteralIndex(al.o2)) : String.format("(S, %02d)", getSymbolIndex(al.o2));
-                    } else if (al.o.equals("READ") || al.o.equals("PRINT")) {
-                        if (al.o1 != null) opd = String.format("(S, %02d)", getSymbolIndex(al.o1));
+                    if (assemblyline.opcode.equals("MOVER") || assemblyline.opcode.equals("MOVEM") || assemblyline.opcode.equals("ADD") || assemblyline.opcode.equals("SUB") || assemblyline.opcode.equals("DIV")) {
+                        rg = (assemblyline.operand1 != null && assemblyline.operand1.equalsIgnoreCase("BREG")) ? "(1)" : "(0)";
+                        if (assemblyline.operand2 != null) 
+                            opd = assemblyline.operand2.startsWith("=") ? String.format("(L, %02d)", getLiteralIndex(assemblyline.operand2)) : String.format("(S, %02d)", getSymbolIndex(assemblyline.operand2));
+                    } else if (assemblyline.opcode.equals("READ") || assemblyline.opcode.equals("PRINT")) {
+                        if (assemblyline.operand1 != null) 
+                            opd = String.format("(S, %02d)", getSymbolIndex(assemblyline.operand1));
                     }
-                    iw.write(String.format("(%s, %s) %s %s\n", op.t, op.c, rg, opd).trim().replaceAll(" +", " ") + "\n");
-                    lc += op.l;
+                    interwriter.write(String.format("(%s, %s) %s %s\n", op.type, op.code, rg, opd).trim().replaceAll(" +", " ") + "\n");
+                    lc += op.length;
                 }
             }
-            sw.write("Symb\tAddr\n");
-            for (Map.Entry<String, Integer> e : symtab.entrySet()) sw.write(String.format("%s\t%d\n", e.getKey(), e.getValue()));
-            lw.write("Lit#\tLit\tAddr\n");
+            symwriter.write("Symb\tAddr\n");
+            for (Map.Entry<String, Integer> 
+                e : symtab.entrySet()) symwriter.write(String.format("%s\t%d\n", e.getKey(), e.getValue()));
+            litwriter.write("Lit#\tLit\tAddr\n");
             List<String> litNames = new ArrayList<>(littab.keySet());
-            for (int i = 0; i < litNames.size(); i++) lw.write(String.format("%02d\t%s\t%d\n", i, litNames.get(i), littab.get(litNames.get(i))));
-            pw.write("Pool#\tPool Base\n");
-            for (int i = 0; i < pooltab.size() - 1; i++) pw.write(String.format("%02d\t%d\n", i, pooltab.get(i)));
+            for (int i = 0; i < litNames.size(); i++) 
+                litwriter.write(String.format("%02d\t%s\t%d\n", i, litNames.get(i), littab.get(litNames.get(i))));
+            poolwriter.write("Pool#\tPool Base\n");
+            for (int i = 0; i < pooltab.size() - 1; i++) 
+                poolwriter.write(String.format("%02d\t%d\n", i, pooltab.get(i)));
         }
     }
 }
