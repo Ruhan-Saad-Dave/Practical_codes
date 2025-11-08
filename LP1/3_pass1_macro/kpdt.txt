@@ -1,3 +1,0 @@
-Index	Default Value
--------------------------
-0    	AREG
