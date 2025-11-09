@@ -26,11 +26,14 @@ public class Fit {
     }
 
     public static void firstFit(int[] b, int[] p) {
-        int[] alloc = new int[p.length]; Arrays.fill(alloc, -1);
+        int[] alloc = new int[p.length]; 
+        Arrays.fill(alloc, -1);
         for (int i = 0; i < p.length; i++) {
             for (int j = 0; j < b.length; j++) {
                 if (b[j] >= p[i]) {
-                    alloc[i] = j; b[j] -= p[i]; break;
+                    alloc[i] = j; 
+                    b[j] -= p[i]; 
+                    break;
                 }
             }
         }
@@ -38,13 +41,17 @@ public class Fit {
     }
 
     public static void nextFit(int[] b, int[] p) {
-        int[] alloc = new int[p.length]; Arrays.fill(alloc, -1);
+        int[] alloc = new int[p.length]; 
+        Arrays.fill(alloc, -1);
         int lastIdx = 0;
         for (int i = 0; i < p.length; i++) {
             for (int k = 0; k < b.length; k++) {
                 int j = (lastIdx + k) % b.length;
                 if (b[j] >= p[i]) {
-                    alloc[i] = j; b[j] -= p[i]; lastIdx = (j + 1) % b.length; break;
+                    alloc[i] = j; 
+                    b[j] -= p[i]; 
+                    lastIdx = (j + 1) % b.length; 
+                    break;
                 }
             }
         }
@@ -52,31 +59,47 @@ public class Fit {
     }
 
     public static void bestFit(int[] b, int[] p) {
-        int[] alloc = new int[p.length]; Arrays.fill(alloc, -1);
+        int[] alloc = new int[p.length]; 
+        Arrays.fill(alloc, -1);
         for (int i = 0; i < p.length; i++) {
-            int bestIdx = -1; int minFrag = Integer.MAX_VALUE;
+            int bestIdx = -1; 
+            int minFrag = Integer.MAX_VALUE;
             for (int j = 0; j < b.length; j++) {
                 if (b[j] >= p[i]) {
                     int frag = b[j] - p[i];
-                    if (frag < minFrag) { minFrag = frag; bestIdx = j; }
+                    if (frag < minFrag) { 
+                        minFrag = frag; 
+                        bestIdx = j; 
+                    }
                 }
             }
-            if (bestIdx != -1) { alloc[i] = bestIdx; b[bestIdx] -= p[i]; }
+            if (bestIdx != -1) { 
+                alloc[i] = bestIdx; 
+                b[bestIdx] -= p[i]; 
+            }
         }
         printResults("Best Fit", p, alloc);
     }
 
     public static void worstFit(int[] b, int[] p) {
-        int[] alloc = new int[p.length]; Arrays.fill(alloc, -1);
+        int[] alloc = new int[p.length]; 
+        Arrays.fill(alloc, -1);
         for (int i = 0; i < p.length; i++) {
-            int worstIdx = -1; int maxFrag = -1;
+            int worstIdx = -1; 
+            int maxFrag = -1;
             for (int j = 0; j < b.length; j++) {
                 if (b[j] >= p[i]) {
                     int frag = b[j] - p[i];
-                    if (frag > maxFrag) { maxFrag = frag; worstIdx = j; }
+                    if (frag > maxFrag) { 
+                        maxFrag = frag; 
+                        worstIdx = j; 
+                    }
                 }
             }
-            if (worstIdx != -1) { alloc[i] = worstIdx; b[worstIdx] -= p[i]; }
+            if (worstIdx != -1) { 
+                alloc[i] = worstIdx; 
+                b[worstIdx] -= p[i]; 
+            ~}
         }
         printResults("Worst Fit", p, alloc);
     }
@@ -86,8 +109,10 @@ public class Fit {
         System.out.println(" Process No.\tProcess Size\tBlock No.");
         for (int i = 0; i < p.length; i++) {
             System.out.print("     " + (i + 1) + "\t\t    " + p[i] + "\t\t");
-            if (alloc[i] != -1) System.out.println((alloc[i] + 1));
-            else System.out.println("Not Allocated");
+            if (alloc[i] != -1) 
+                System.out.println((alloc[i] + 1));
+            else 
+                System.out.println("Not Allocated");
         }
     }
 }
