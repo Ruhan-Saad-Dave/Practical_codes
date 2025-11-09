@@ -4,21 +4,17 @@ import java.util.List;
 import java.util.Scanner;
 
 interface PRA { // PageReplacementAlgorithm
-    // MODIFIED: Changed return type from int to void
     void run(int cap, int[] rs);
 }
 
 class LRU implements PRA {
-    // MODIFIED: Changed return type, added print logic
-    public void run(int cap, int[] rs) {
-        int pf = 0; // pageFaults
-        // fr (frames) list is used as a queue:
-        // Index 0 = LRU, Index size-1 = MRU
-        List<Integer> fr = new ArrayList<>(cap); 
+    public void run(int cap, int[] rs) { //capicity, referenceString(input numbers)
+        int pf = 0; //pageFault
+        List<Integer> fr = new ArrayList<>(cap); //frame
         System.out.println("\n--- LRU Algorithm ---");
         System.out.print("Page\tFrames\n");
         
-        for (int p : rs) {
+        for (int p : rs) { //page
             System.out.print(p + "\t");
             if (fr.contains(p)) {
                 // --- HIT ---
@@ -41,10 +37,9 @@ class LRU implements PRA {
 }
 
 class Optimal implements PRA {
-    // MODIFIED: Changed return type, added print logic
     public void run(int cap, int[] rs) {
         int pf = 0;
-        List<Integer> fr = new ArrayList<>(cap); // fr (frames) is just a set
+        List<Integer> fr = new ArrayList<>(cap);
         System.out.println("\n--- Optimal Algorithm ---");
         System.out.print("Page\tFrames\n");
         
@@ -107,19 +102,11 @@ public class Page {
 
         PRA lru = new LRU();
         PRA opt = new Optimal();
-        
-        // MODIFIED: Calls now just run the methods, no return value
         lru.run(cap, rs);
         opt.run(cap, rs);
-
-        // MODIFIED: Removed final print block
         sc.close();
     }
-    
-    /**
-     * NEW: Helper method to print the current state of the frames
-     * in a clean, table-like format.
-     */
+
     public static void printFrames(List<Integer> fr, int cap) {
         // Print all pages currently in frames
         for (int i = 0; i < fr.size(); i++) {
