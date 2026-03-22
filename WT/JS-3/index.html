@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title> JavaScript Calculator </title>
+    <style>
+        /* CSS stays here */
+        h1 {
+            text-align: center;
+            padding: 23px;
+            background-color: skyblue;
+            color: white;
+        }
+        .formstyle {
+            width: 320px;
+            margin: auto;
+            border: 3px solid skyblue;
+            border-radius: 5px;
+            padding: 20px;
+            text-align: center;
+        }
+        input[type="button"] {
+            width: 60px;
+            background-color: green;
+            color: white;
+            border: 3px solid gray;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 5px;
+            font-size: 15px;
+            cursor: pointer;
+        }
+        #calc {
+            width: 250px;
+            border: 5px solid black;
+            border-radius: 3px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: right;
+            font-size: 18px;
+        }
+        #clear {
+            width: 270px;
+            background-color: red;
+            color: white;
+            border-radius: 3px;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1> Calculator Program in JavaScript </h1>
+    <div class="formstyle">
+        <form name="form1">
+            <input id="calc" type="text" name="answer" readonly> <br>
+            
+            <input type="button" value="1" onclick="document.form1.answer.value += '1'">
+            <input type="button" value="2" onclick="document.form1.answer.value += '2'">
+            <input type="button" value="3" onclick="document.form1.answer.value += '3'">
+            <input type="button" value="+" onclick="document.form1.answer.value += '+'">
+            <br>
+            <input type="button" value="4" onclick="document.form1.answer.value += '4'">
+            <input type="button" value="5" onclick="document.form1.answer.value += '5'">
+            <input type="button" value="6" onclick="document.form1.answer.value += '6'">
+            <input type="button" value="-" onclick="document.form1.answer.value += '-'">
+            <br>
+            <input type="button" value="7" onclick="document.form1.answer.value += '7'">
+            <input type="button" value="8" onclick="document.form1.answer.value += '8'">
+            <input type="button" value="9" onclick="document.form1.answer.value += '9'">
+            <input type="button" value="*" onclick="document.form1.answer.value += '*'">
+            <br>
+            <input type="button" value="/" onclick="document.form1.answer.value += '/'">
+            <input type="button" value="0" onclick="document.form1.answer.value += '0'">
+            <input type="button" value="." onclick="document.form1.answer.value += '.'">
+            
+            <input type="button" value="=" onclick="calculate()">
+            <br><br>
+            
+            <input type="button" value="Clear All" onclick="document.form1.answer.value = ''" id="clear">
+        </form>
+    </div>
+
+    <script type="text/javascript">
+        function calculate() {
+            // Get the current input from the text field [cite: 495, 501]
+            var input = document.form1.answer.value;
+            
+            try {
+                // Validation: Ensure the screen isn't empty [cite: 462, 518]
+                if (input === "") {
+                    alert("Please enter a value"); 
+                    return;
+                }
+                
+                // Solve the equation and update the screen [cite: 600]
+                var result = eval(input);
+                document.form1.answer.value = result;
+            } catch (err) {
+                // Error handling for invalid math [cite: 526]
+                alert("Invalid Input! Only numbers and operators are allowed."); 
+                document.form1.answer.value = "";
+            }
+        }
+    </script>
+</body>
+</html>
