@@ -1,6 +1,3 @@
-# Laboratory Practice II - Assignment A2
-# Implementation of A* Algorithm for the Graph Problem in the Manual
-
 class AStarGraph:
     def __init__(self):
         # Adjacency list: {node: [(neighbor, edge_cost), ...]}

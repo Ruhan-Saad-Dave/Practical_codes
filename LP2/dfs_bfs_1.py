@@ -1,6 +1,3 @@
-# Laboratory Practice II - Assignment A1
-# Implementation of DFS and BFS for an undirected graph
-
 class Graph:
     def __init__(self):
         # Using a dictionary to store the adjacency list

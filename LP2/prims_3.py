@@ -1,6 +1,3 @@
-# Laboratory Practice II - Assignment A3
-# Implementation of Prim's Algorithm (Explicit Edge Definition)
-
 import sys
 
 class PrimMST:
