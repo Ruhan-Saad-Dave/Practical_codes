@@ -1,6 +1,9 @@
 # Laboratory Practice II - Assignment A3
 # Implementation of Kruskal's Algorithm
 
+print("Name = Ruhan Saad Dave")
+print("Roll no = TECOA23101")
+
 class KruskalMST:
     def __init__(self, vertices):
         self.V = vertices
